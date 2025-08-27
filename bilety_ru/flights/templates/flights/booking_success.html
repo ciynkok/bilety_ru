@@ -1,0 +1,176 @@
+{% extends 'flights/base.html' %}
+{% load static %}
+
+{% block title %}Заказ оформлен - Билеты.ру{% endblock %}
+
+{% block extra_css %}
+<style>
+    .success-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 30px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .success-icon {
+        font-size: 80px;
+        color: #28a745;
+        margin-bottom: 20px;
+    }
+    .order-details {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 30px;
+    }
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+    }
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+    .detail-label {
+        font-weight: bold;
+        color: #6c757d;
+    }
+    .detail-value {
+        text-align: right;
+    }
+    .print-button {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        margin-right: 10px;
+        font-weight: bold;
+        transition: background-color 0.3s;
+    }
+    .print-button:hover {
+        background-color: #5a6268;
+    }
+    .home-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-weight: bold;
+        transition: background-color 0.3s;
+    }
+    .home-button:hover {
+        background-color: #0056b3;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="success-container-wrapper">
+    <div class="success-container text-center">
+        <div class="success-icon">✓</div>
+        <h2 class="mb-4">Заказ успешно оформлен!</h2>
+        <p class="lead">Ваш билет успешно забронирован. Подтверждение отправлено на указанный email.</p>
+        
+        <div class="order-details">
+            <h4 class="mb-3">Детали заказа</h4>
+            {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+            {% else %}
+                <div class="detail-row">
+                    <div class="detail-label">Номер бронирования:</div>
+                    <div class="detail-value">{{ booking.id }}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Статус:</div>
+                    <div class="detail-value">{{ booking.get_status_display }}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Маршрут:</div>
+                    <div class="detail-value">{{ segments.0.dep_airport }} ({{ segments.0.dep_iataCode }}) - {{ segments.last.arr_airport }} ({{ segments.last.arr_iataCode }})</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Дата вылета:</div>
+                    <div class="detail-value">{{ segments.0.dep_dateTime|date:"d.m.Y H:i" }}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Количество пассажиров:</div>
+                    <div class="detail-value">{{ passengers|length }}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Итоговая стоимость:</div>
+                    <div class="detail-value">{{ booking.total_price }} {{ booking.currency_code }}</div>
+                </div>
+                
+                <!-- Информация о пассажирах -->
+                <h5 class="mt-4 mb-3">Информация о пассажирах</h5>
+                {% for passenger in passengers %}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        Пассажир {{ forloop.counter }} - {{ passenger.type|default:'Взрослый' }}
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Имя:</strong> {{ passenger.firstName }}</p>
+                                <p><strong>Фамилия:</strong> {{ passenger.lastName }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Дата рождения:</strong> {{ passenger.dateOfBirth }}</p>
+                                {% if passenger.documentNumber %}
+                                <p><strong>Документ:</strong> {{ passenger.documentType }} {{ passenger.documentNumber }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <!-- Контактная информация -->
+                <h5 class="mt-4 mb-3">Контактная информация</h5>
+                <div class="detail-row">
+                    <div class="detail-label">Email:</div>
+                    <div class="detail-value">{{ booking.contact_email }}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Телефон:</div>
+                    <div class="detail-value">{{ booking.contact_phone }}</div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="mt-4">
+            <button class="print-button" onclick="window.print();">Распечатать</button>
+            <a href="/" class="home-button">На главную</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const orderId = document.getElementById('orderId').textContent;
+        
+        // Получаем информацию о заказе
+        fetch(`/api/order/${orderId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Error:', data.error);
+                    return;
+                }
+                
+                // Заполняем детали заказа
+                document.getElementById('route').textContent = `${data.origin} → ${data.destination}`;
+                document.getElementById('departureDate').textContent = data.departureDate;
+                document.getElementById('passengerCount').textContent = data.passengerCount;
+                document.getElementById('totalPrice').textContent = `${data.totalPrice} ${data.currencyCode}`;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    });
+</script>
+{% endblock %}

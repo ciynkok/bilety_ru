@@ -1,0 +1,103 @@
+{% extends 'flights/base.html' %}
+{% load static %}
+{% load user_tags %}
+
+{% block title %}Профиль - Билеты.ру{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row">
+        <!-- Информация о пользователе -->
+        <div class="col-md-4">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Информация о пользователе</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="avatar-circle mb-3">
+                            <span class="initials">{{ user.first_name|first }}{{ user.last_name|first }}</span>
+                        </div>
+                        <h4>{{ user.first_name }} {{ user.last_name }}</h4>
+                        <p class="text-muted">{{ user.email }}</p>
+                    </div>
+                    
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Имя пользователя:</span>
+                            <span class="badge bg-primary">{{ user.username }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Дата регистрации:</span>
+                            <span class="badge bg-secondary">{{ user.date_joined|date:"d.m.Y" }}</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'user_management:logout' %}" class="btn btn-danger btn-sm w-100">Выйти из системы</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- История поисков и бронирований -->
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">История поисков</h5>
+                </div>
+                <div class="card-body">
+                    {% if flight_requests %}
+                        <div class="list-group">
+                            {% for request in flight_requests %}
+                                <a href="{% url 'flights:search_results' request.id %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1">{{ request.originLocationCode }} → {{ request.destinationLocationCode }}</h5>
+                                        <small>{{ request.created_at|date:"d.m.Y H:i" }}</small>
+                                    </div>
+                                    <p class="mb-1">Дата: {{ request.departureDate }}</p>
+                                    <small>Пассажиры: {{ request.adults }} взр.{% if request.children %}, {{ request.children }} дет.{% endif %}</small>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            У вас пока нет истории поисков. <a href="{% url 'flights:home' %}" class="alert-link">Найти рейс</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Мои бронирования</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        Функционал бронирований находится в разработке.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .avatar-circle {
+        width: 100px;
+        height: 100px;
+        background-color: #007bff;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 auto;
+    }
+    
+    .initials {
+        font-size: 42px;
+        color: #fff;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+</style>
+{% endblock %}

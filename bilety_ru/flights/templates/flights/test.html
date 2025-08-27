@@ -1,0 +1,93 @@
+const offerId = window.location.pathname.split('/').filter(Boolean).pop();
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const flightDetailsContainer = document.getElementById('flightDetails');
+        
+        // Показываем оверлей загрузки
+        loadingOverlay.style.display = 'flex';
+        
+        // Получаем актуальную цену и детали рейса
+        
+        fetch(`/api/check-price/${offerId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Error:', data.error);
+                    flightDetailsContainer.innerHTML = `<div class="alert alert-danger">Ошибка при получении данных о рейсе: ${data.error}</div>`;
+                    return;
+                }
+                
+                // Получаем детали рейса
+                return fetch(`/api/flight-offers/`)
+                    .then(response => response.json())
+                    .then(offersData => {
+                        const offer = offersData.offers.find(o => o.id == offerId);
+                        if (!offer) {
+                            throw new Error('Рейс не найден');
+                        }
+                        
+                        // Обновляем цену из актуальных данных
+                        offer.totalPrice = data.totalPrice;
+                        
+                        // Обновляем скрытое поле с актуальной ценой
+                        document.getElementById('actualPrice').value = data.totalPrice;
+                        
+                        return offer;
+                    });
+            })
+            .then(offer => {
+                // Скрываем оверлей загрузки
+                loadingOverlay.style.display = 'none';
+                
+                // Отображаем детали рейса
+                let segmentsHtml = '';
+                offer.outbound.forEach(segment => {
+                    segmentsHtml += `
+                        <div class="flight-segment">
+                            <div class="d-flex align-items-center">
+                                <img src="${segment.airlineLogo}" alt="${segment.airline}" class="airline-logo">
+                                <div>
+                                    <strong>${segment.departureDateTime.substr(11, 5)}</strong> ${segment.departureAirport} (${segment.departureCity})
+                                    <span class="flight-arrow">→</span>
+                                    <strong>${segment.arrivalDateTime.substr(11, 5)}</strong> ${segment.arrivalAirport} (${segment.arrivalCity})
+                                    <div class="flight-duration">Продолжительность: ${segment.duration}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                flightDetailsContainer.innerHTML = `
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Информация о рейсе</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Уведомление об изменении цены -->
+                            <div id="priceAlert" class="alert alert-warning d-none mb-3">
+                                <h6 class="alert-heading">Внимание! Цена изменилась</h6>
+                                <p>Первоначальная цена: <span id="originalPrice"></span></p>
+                                <p>Новая цена: <strong id="totalPrice">${offer.totalPrice} ${offer.currencyCode}</strong> <span id="priceDifference" class="ml-2"></span></p>
+                                <p class="mb-0">Цены на авиабилеты динамические и могут меняться в зависимости от спроса и наличия мест.</p>
+                                <hr>
+                                <button id="acceptNewPrice" class="btn btn-sm btn-primary">Продолжить с новой ценой</button>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h6 class="mb-1">${offer.origin} → ${offer.destination}</h6>
+                                    <p class="text-muted mb-0">${offer.departureDate} {% if offer.returnDate %} - {{ offer.returnDate }}{% endif %}</p>
+                                </div>
+                                <div>
+                                    <span class="h4 text-success" id="totalPrice">${offer.totalPrice} ${offer.currencyCode}</span>
+                                </div>
+                            </div>
+                            ${segmentsHtml}
+                        </div>
+                    </div>
+                `;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loadingOverlay.style.display = 'none';
+                flightDetailsContainer.innerHTML = `<div class="alert alert-danger">Ошибка при загрузке данных о рейсе: ${error.message}</div>`;
+            });

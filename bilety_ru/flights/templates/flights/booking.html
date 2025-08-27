@@ -1,0 +1,487 @@
+{% extends 'flights/base.html' %}
+{% load static %}
+
+{% block title %}Оформление билета - Билеты.ру{% endblock %}
+
+{% block extra_css %}
+<style>
+    .booking-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    .flight-details {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .flight-segment {
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px dashed #eee;
+    }
+    .flight-segment:last-child {
+        border-bottom: none;
+    }
+    .airline-logo {
+        height: 30px;
+        margin-right: 10px;
+    }
+    .flight-arrow {
+        color: #007bff;
+        font-size: 20px;
+        margin: 0 10px;
+    }
+    .flight-price {
+        font-size: 24px;
+        font-weight: bold;
+        color: #28a745;
+    }
+    .booking-form {
+        background-color: #fff;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .form-section {
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #eee;
+    }
+    .form-section:last-child {
+        border-bottom: none;
+    }
+    .section-title {
+        margin-bottom: 20px;
+        color: #007bff;
+    }
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        display: none;
+    }
+    .loading-spinner {
+        text-align: center;
+    }
+    .payment-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-top: 15px;
+    }
+    .payment-option {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 10px;
+        width: 120px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .payment-option:hover {
+        border-color: #007bff;
+        background-color: #f0f7ff;
+    }
+    .payment-option.selected {
+        border-color: #007bff;
+        background-color: #e6f2ff;
+    }
+    .payment-option img {
+        height: 40px;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="booking-container">
+    <h2 class="mb-4">Оформление билета</h2>
+    
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Загрузка...</span>
+            </div>
+            <p class="mt-2">Проверяем актуальность цены...</p>
+        </div>
+    </div>
+    
+    <div class="flight-details" id="flightDetails">
+        <!-- Детали рейса будут загружены через JavaScript -->
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Загрузка...</span>
+            </div>
+        </div>
+    </div>
+    
+    <form method="post" action="{% url 'flights:booking' flight_offer.id %}" id="bookingForm">
+        {% csrf_token %}
+        <input type="hidden" name="actualPrice" id="actualPrice" value="{{ flight_offer.total_price }}">
+        
+        <div class="form-section">
+            <h4 class="section-title">Информация о пассажирах</h4>
+            
+            <!-- Скрытые поля для хранения количества пассажиров -->
+            <input type="hidden" id="adults_count" name="adults_count" value="{{ adults }}">
+            <input type="hidden" id="children_count" name="children_count" value="{{ children }}">
+            <input type="hidden" id="infants_count" name="infants_count" value="{{ infants }}">
+            
+            <div id="passengersContainer">
+                <!-- Формы для взрослых пассажиров -->
+                {% if adults > 0 %}
+                <div class="passenger-type-header">
+                    <h5>Взрослые пассажиры (от 12 лет)</h5>
+                </div>
+                {% for i in adults_range %}
+                <div class="passenger-info card mb-3">
+                    <div class="card-header">
+                        Взрослый пассажир {{ i }}
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 form-group">
+                                <label for="adult_{{ i }}_first_name">Имя</label>
+                                <input type="text" class="form-control" id="adult_{{ i }}_first_name" name="adult_{{ i }}_first_name" required>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="adult_{{ i }}_last_name">Фамилия</label>
+                                <input type="text" class="form-control" id="adult_{{ i }}_last_name" name="adult_{{ i }}_last_name" required>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="adult_{{ i }}_dob">Дата рождения</label>
+                                <input type="date" class="form-control" id="adult_{{ i }}_dob" name="adult_{{ i }}_dob" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 form-group">
+                                <label for="adult_{{ i }}_gender">Пол</label>
+                                <select class="form-control" id="adult_{{ i }}_gender" name="adult_{{ i }}_gender" required>
+                                    <option value="">Выберите</option>
+                                    <option value="MALE">Мужской</option>
+                                    <option value="FEMALE">Женский</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="adult_{{ i }}_document_type">Тип документа</label>
+                                <select class="form-control" id="adult_{{ i }}_document_type" name="adult_{{ i }}_document_type" required>
+                                    <option value="">Выберите</option>
+                                    <option value="PASSPORT">Паспорт</option>
+                                    <option value="ID_CARD">Удостоверение личности</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="adult_{{ i }}_document_number">Номер документа</label>
+                                <input type="text" class="form-control" id="adult_{{ i }}_document_number" name="adult_{{ i }}_document_number" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+                
+                <!-- Формы для детей -->
+                {% if children > 0 %}
+                <div class="passenger-type-header">
+                    <h5>Дети (от 2 до 12 лет)</h5>
+                </div>
+                {% for i in children_range %}
+                <div class="passenger-info card mb-3">
+                    <div class="card-header">
+                        Ребенок {{ i }}
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 form-group">
+                                <label for="child_{{ i }}_first_name">Имя</label>
+                                <input type="text" class="form-control" id="child_{{ i }}_first_name" name="child_{{ i }}_first_name" required>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="child_{{ i }}_last_name">Фамилия</label>
+                                <input type="text" class="form-control" id="child_{{ i }}_last_name" name="child_{{ i }}_last_name" required>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="child_{{ i }}_dob">Дата рождения</label>
+                                <input type="date" class="form-control" id="child_{{ i }}_dob" name="child_{{ i }}_dob" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 form-group">
+                                <label for="child_{{ i }}_gender">Пол</label>
+                                <select class="form-control" id="child_{{ i }}_gender" name="child_{{ i }}_gender" required>
+                                    <option value="">Выберите</option>
+                                    <option value="MALE">Мужской</option>
+                                    <option value="FEMALE">Женский</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+                
+                <!-- Формы для младенцев -->
+                {% if infants > 0 %}
+                <div class="passenger-type-header">
+                    <h5>Младенцы (до 2 лет)</h5>
+                </div>
+                {% for i in infants_range %}
+                <div class="passenger-info card mb-3">
+                    <div class="card-header">
+                        Младенец {{ i }}
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 form-group">
+                                <label for="infant_{{ i }}_first_name">Имя</label>
+                                <input type="text" class="form-control" id="infant_{{ i }}_first_name" name="infant_{{ i }}_first_name" required>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="infant_{{ i }}_last_name">Фамилия</label>
+                                <input type="text" class="form-control" id="infant_{{ i }}_last_name" name="infant_{{ i }}_last_name" required>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="infant_{{ i }}_dob">Дата рождения</label>
+                                <input type="date" class="form-control" id="infant_{{ i }}_dob" name="infant_{{ i }}_dob" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 form-group">
+                                <label for="infant_{{ i }}_gender">Пол</label>
+                                <select class="form-control" id="infant_{{ i }}_gender" name="infant_{{ i }}_gender" required>
+                                    <option value="">Выберите</option>
+                                    <option value="MALE">Мужской</option>
+                                    <option value="FEMALE">Женский</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+            
+            <div class="form-section">
+                <h4 class="section-title">Контактная информация</h4>
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label for="contactEmail">Email</label>
+                        <input type="email" class="form-control" id="contactEmail" name="contact[email]" required>
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label for="contactPhone">Телефон</label>
+                        <input type="tel" class="form-control" id="contactPhone" name="contact[phone]" required>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h4 class="section-title">Способ оплаты</h4>
+                <div class="payment-options">
+                    <div class="payment-option" data-payment="card">
+                        <img src="https://cdn-icons-png.flaticon.com/512/196/196578.png" alt="Банковская карта">
+                        <div>Банковская карта</div>
+                    </div>
+                    <div class="payment-option" data-payment="paypal">
+                        <img src="https://cdn-icons-png.flaticon.com/512/174/174861.png" alt="PayPal">
+                        <div>PayPal</div>
+                    </div>
+                    <div class="payment-option" data-payment="applepay">
+                        <img src="https://cdn-icons-png.flaticon.com/512/5968/5968249.png" alt="Apple Pay">
+                        <div>Apple Pay</div>
+                    </div>
+                </div>
+                <input type="hidden" id="paymentMethod" name="paymentMethod" value="">
+            </div>
+            
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">Оформить билет</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        
+        // Удалённый участок кода!!
+
+        // Обработчик для добавления пассажира
+        let passengerCount = 1;
+        document.getElementById('addPassengerBtn').addEventListener('click', function() {
+            passengerCount++;
+            const passengerHtml = `
+                <div class="passenger-info card mb-3">
+                    <div class="card-header">
+                        Пассажир ${passengerCount}
+                        <button type="button" class="close remove-passenger" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 form-group">
+                                <label for="passenger${passengerCount}_firstName">Имя</label>
+                                <input type="text" class="form-control" id="passenger${passengerCount}_firstName" name="passengers[${passengerCount-1}][firstName]" required>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="passenger${passengerCount}_lastName">Фамилия</label>
+                                <input type="text" class="form-control" id="passenger${passengerCount}_lastName" name="passengers[${passengerCount-1}][lastName]" required>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="passenger${passengerCount}_dateOfBirth">Дата рождения</label>
+                                <input type="date" class="form-control" id="passenger${passengerCount}_dateOfBirth" name="passengers[${passengerCount-1}][dateOfBirth]" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="passenger${passengerCount}_passportNumber">Номер паспорта</label>
+                                <input type="text" class="form-control" id="passenger${passengerCount}_passportNumber" name="passengers[${passengerCount-1}][passportNumber]" required>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="passenger${passengerCount}_passportExpiry">Срок действия паспорта</label>
+                                <input type="date" class="form-control" id="passenger${passengerCount}_passportExpiry" name="passengers[${passengerCount-1}][passportExpiry]" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const container = document.getElementById('passengersContainer');
+            const div = document.createElement('div');
+            div.innerHTML = passengerHtml;
+            container.appendChild(div.firstElementChild);
+            
+            // Добавляем обработчик для удаления пассажира
+            const removeButtons = document.querySelectorAll('.remove-passenger');
+            removeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    this.closest('.passenger-info').remove();
+                });
+            });
+        });
+        
+        // Обработчик для выбора способа оплаты
+        const paymentOptions = document.querySelectorAll('.payment-option');
+        paymentOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                paymentOptions.forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                document.getElementById('paymentMethod').value = this.dataset.payment;
+            });
+        });
+        
+        // Обработчик отправки формы
+        document.getElementById('bookingForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Проверяем, выбран ли способ оплаты
+            if (!document.getElementById('paymentMethod').value) {
+                alert('Пожалуйста, выберите способ оплаты');
+                return;
+            }
+            
+            // Собираем данные формы
+            const formData = new FormData(this);
+            const bookingData = {
+                travelers: [],
+                contacts: []
+            };
+            
+            // Собираем данные о пассажирах
+            const passengerInputs = document.querySelectorAll('.passenger-info');
+            passengerInputs.forEach((passenger, index) => {
+                const firstName = passenger.querySelector(`[name="passengers[${index}][firstName]"]`).value;
+                const lastName = passenger.querySelector(`[name="passengers[${index}][lastName]"]`).value;
+                const dateOfBirth = passenger.querySelector(`[name="passengers[${index}][dateOfBirth]"]`).value;
+                const passportNumber = passenger.querySelector(`[name="passengers[${index}][passportNumber]"]`).value;
+                const passportExpiry = passenger.querySelector(`[name="passengers[${index}][passportExpiry]"]`).value;
+                
+                bookingData.travelers.push({
+                    id: index + 1,
+                    dateOfBirth: dateOfBirth,
+                    name: {
+                        firstName: firstName,
+                        lastName: lastName
+                    },
+                    documents: [
+                        {
+                            documentType: "PASSPORT",
+                            number: passportNumber,
+                            expiryDate: passportExpiry,
+                            issuanceCountry: "RU",
+                            nationality: "RU",
+                            holder: true
+                        }
+                    ]
+                });
+            });
+            
+            // Собираем контактные данные
+            const email = document.getElementById('contactEmail').value;
+            const phone = document.getElementById('contactPhone').value;
+            
+            bookingData.contacts.push({
+                addresseeName: {
+                    firstName: bookingData.travelers[0].name.firstName,
+                    lastName: bookingData.travelers[0].name.lastName
+                },
+                companyName: "BILETY.RU",
+                purpose: "STANDARD",
+                phones: [
+                    {
+                        deviceType: "MOBILE",
+                        countryCallingCode: "7",
+                        number: phone.replace(/[^0-9]/g, '')
+                    }
+                ],
+                emailAddress: email
+            });
+            
+            // Показываем оверлей загрузки
+            loadingOverlay.style.display = 'flex';
+            loadingOverlay.querySelector('p').textContent = 'Оформляем заказ...';
+            
+            // Отправляем запрос на создание заказа
+            fetch(`/api/create-order/${offerId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(bookingData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingOverlay.style.display = 'none';
+                
+                if (data.error) {
+                    alert(`Ошибка при оформлении заказа: ${data.error}`);
+                    return;
+                }
+                
+                // Перенаправляем на страницу успешного оформления
+                window.location.href = `/booking/success/${data.order.id}/`;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loadingOverlay.style.display = 'none';
+                alert(`Ошибка при оформлении заказа: ${error.message}`);
+            });
+        });
+    });
+</script>
+<script src="{% static 'flights/js/booking.js' %}"></script>
+{% endblock %}

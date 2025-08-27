@@ -1,0 +1,225 @@
+
+
+.card {
+    border-radius: var(--border-radius);
+    border: none;
+    box-shadow: var(--box-shadow);
+    transition: transform 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.flight-card {
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    margin: 10px;
+    transition: transform 0.3s;
+}
+.flight-card:hover {
+    transform: translateY(-5px);
+}
+.flight-header {
+    background-color: #f8f9fa;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+.flight-body {
+    padding: 20px;
+}
+.flight-price {
+    font-size: 24px;
+    font-weight: bold;
+    color: #28a745;
+}
+.flight-segment {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed #eee;
+    gap: 15px;
+}
+.flight-segment:last-child {
+    border-bottom: none;
+}
+.airline-logo {
+    height: 30px;
+    margin-right: 10px;
+}
+.flight-duration {
+    color: #6c757d;
+    font-size: 14px;
+}
+.flight-arrow {
+    color: #007bff;
+    font-size: 20px;
+    margin: 0 10px;
+}
+.book-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+.book-button:hover {
+    background-color: #0056b3;
+}
+
+.context-segment {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 90px;
+}
+
+/* Стили для формы поиска */
+
+.search-form {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+.search-form .form-group {
+    margin-bottom: 15px;
+}
+
+
+/* Стили для автозаполнения */
+
+.autocomplete {
+    position: relative;
+}
+
+.autocomplete-items {
+    position: absolute;
+    border: 1px solid #d4d4d4;
+    border-radius: 0 0 4px 4px;
+    border-top: none;
+    z-index: 99;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 250px;
+    overflow-y: auto;
+    background-color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.autocomplete-items div {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #f3f3f3;
+}
+
+.autocomplete-items div:last-child {
+    border-bottom: none;
+    border-radius: 0 0 4px 4px;
+}
+
+.autocomplete-items div:hover {
+    background-color: #f1f8ff;
+}
+
+.autocomplete-items .airport-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.autocomplete-items .airport-item strong {
+    color: #007bff;
+    font-size: 16px;
+    margin-bottom: 2px;
+}
+
+.autocomplete-items .loading-item {
+    color: #6c757d;
+    text-align: center;
+    padding: 15px;
+    font-style: italic;
+}
+
+.autocomplete-items .error-item {
+    color: #dc3545;
+    text-align: center;
+    padding: 15px;
+}
+
+.autocomplete-items .no-results {
+    color: #6c757d;
+    text-align: center;
+    padding: 15px;
+    font-style: italic;
+}
+
+/* Стили для блока с параметрами сортировки */
+
+.sorting-options {
+    background-color: #f0f8ff; /* Светло-голубой фон для отличия от основной формы */
+    border-radius: 10px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    border-left: 4px solid #007bff; /* Синяя полоса слева для визуального отличия */
+}
+
+.sorting-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e3f2fd;
+}
+
+.sorting-header h5 {
+    margin: 0;
+    color: #0056b3;
+    font-weight: 600;
+}
+
+.sorting-body {
+    padding: 20px;
+    display: none; /* По умолчанию скрыт, будет показываться по клику */
+}
+
+.sorting-body.active {
+    display: block;
+}
+
+#sortingForm .form-group label {
+    color: #0056b3;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+#sortingForm select, #sortingForm input {
+    border: 1px solid #b8daff;
+    background-color: #fff;
+}
+
+#sortingForm select:focus, #sortingForm input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+#sortingForm select[multiple] {
+    height: 100px;
+}
+
+#applySorting, #resetSorting {
+    margin: 5px;
+}
+
+/* Добавим скрипт для переключения видимости блока сортировки */
+@media (max-width: 768px) {
+    .sorting-options .form-group {
+        margin-bottom: 15px;
+    }
+}
