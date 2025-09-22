@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'user_management',
     'flights',
     'api',
+    'booking',
     'django_apscheduler',
 ]
 

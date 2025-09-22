@@ -23,5 +23,5 @@ urlpatterns = [
     path('user_management/', include('user_management.urls', namespace='user_management')),
     path('api/', include('api.urls', namespace='api')),
     path('', include('flights.urls', namespace='flights')),
-    path('booking', booking_views.BookingView.as_view(), name='booking_index'),
+    path('booking/<int:offer_id>/', booking_views.BookingView.as_view(), name='booking_index'),
 ]

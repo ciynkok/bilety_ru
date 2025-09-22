@@ -17,8 +17,6 @@ import os
 
 load_dotenv()
 
-print(os.getenv('API_KEY'))
-
 c = amadeus.Client(client_id=os.getenv('API_KEY'),
                    client_secret=os.getenv('API_SECRET'))
 
@@ -239,6 +237,31 @@ class SearchAirports(APIView):
             }, status=404)
 
 
+class CheckPriceView(APIView):
+    def get(self, request, offer_id):
+        offer = FlightOffer.objects.get(id=offer_id)
+        try:
+            response = c.shopping.flight_offers.pricing.post(offer.data)
+            print(response.data)
+            print(response.data['flightOffers'][0]['price']['total'])
+            if response and 'flightOffers' in response.data and len(response.data['flightOffers']) > 0:
+                current_price = float(response.data['flightOffers'][0]['price']['total'])
+                return JsonResponse({
+                    'success': True,
+                    'price': current_price,
+                    'currency': offer.currencyCode or 'EUR'
+                })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Flight not found'
+                }, status=404)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+
 def check_flight_price(request, offer_id):
     """
     API для проверки актуальной цены рейса через Amadeus API
@@ -246,7 +269,7 @@ def check_flight_price(request, offer_id):
     try:
         # Получаем предложение по ID
         offer = FlightOffer.objects.get(id=offer_id)
-        print(offer)
+        #print(offer.data)
         # Формируем параметры для запроса
         #params = {'data': {'type': 'flight-offers-pricing', 'flightOffers': [offer.data]}}
         try:
@@ -254,6 +277,8 @@ def check_flight_price(request, offer_id):
         except Exception as e:
             print(e)
         # Проверяем статус ответа
+        #print(response.keys())
+        #print(response)
         if response:
             # Проверяем, есть ли предложения в ответе
             if 'flightOffers' in response.data and len(response.data['flightOffers']) > 0:
@@ -267,6 +292,13 @@ def check_flight_price(request, offer_id):
                 
                 # Возвращаем актуальную цену и разницу с предыдущей
                 price_diff = current_price - old_price
+                return JsonResponse({
+                    'success': True,
+                    'price': current_price,
+                    'old_price': old_price,
+                    'price_diff': price_diff,
+                    'currency': offer.currencyCode or 'EUR',
+                })
                 
                 # Получаем дополнительную информацию о рейсе для корректного отображения карточки
                 '''
@@ -337,18 +369,6 @@ def check_flight_price(request, offer_id):
                     'currency': offer.currencyCode or 'EUR',
                 })
             else:
-                # Если предложений нет, удаляем из кэша и перенаправляем на страницу поиска
-                from django.core.cache import cache
-                
-                # Получаем ключ кэша для этого запроса
-                cache_key = f"flight_offers_{flight_request.id}"
-                
-                # Удаляем предложение из кэша
-                cached_offers = cache.get(cache_key, [])
-                if offer.id in cached_offers:
-                    cached_offers.remove(offer.id)
-                    cache.set(cache_key, cached_offers, 60*15)  # Обновляем кэш на 15 минут
-                
                 return JsonResponse({
                     'success': False,
                     'error': 'Flight not found',
