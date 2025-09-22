@@ -1,6 +1,7 @@
 from django.shortcuts import render
 import amadeus
 from django.http import JsonResponse
+from django.utils import timezone
 from django.forms.models import model_to_dict
 from .models import IATA
 from flights.models import FlightRequest, FlightOffer, FlightSegment
@@ -10,12 +11,16 @@ import json
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 from rest_framework.response import Response
-#import requests
 import datetime
-# Create your views here.
+from dotenv import load_dotenv
+import os
 
-c = amadeus.Client(client_id='1otgEUauKpjxxGPcPxSQvvsRz7o3fxv1',
-                   client_secret='VgqvL5c92wzXcPgV')
+load_dotenv()
+
+print(os.getenv('API_KEY'))
+
+c = amadeus.Client(client_id=os.getenv('API_KEY'),
+                   client_secret=os.getenv('API_SECRET'))
 
 
 def get_cities(request):
@@ -40,11 +45,12 @@ def offer_search_api(flight_req_id):
         kwargs = model_to_dict(flight_req)
         d = {}
         for key in kwargs.keys():
-           if kwargs[key] is not None and key not in ['id', 'user', 'session_key', 'created_at']:
+           if kwargs[key] is not None and key not in ['id', 'user', 'session_key', 'created_at', 'nonStop']:
               d[key] = kwargs[key]
         
         # Ограничиваем количество результатов
         d['max'] = 6
+
 
         # Выполняем поиск рейсов
         search_flights = c.shopping.flight_offers_search.get(**d)
@@ -72,11 +78,13 @@ def offer_search_api(flight_req_id):
                 duration = datetime.time(0, 0)  # Устанавливаем значение по умолчанию
             
             # Создаем предложение рейса
+            #print(segment1['departure']['at'], type(segment1['departure']['at']))
+            #print(isodate.parse_date(segment1['departure']['at']), type(isodate.parse_date(segment1['departure']['at'])))
             offer = FlightOffer(
                 flightRequest=flight_req,
                 adults_count=flight_req.adults,
-                dep_duration=segment1['departure']['at'],
-                arr_duration=segment_last['arrival']['at'],
+                dep_duration=timezone.make_aware(isodate.parse_datetime(segment1['departure']['at'])),
+                arr_duration=timezone.make_aware(isodate.parse_datetime(segment_last['arrival']['at'])),
                 duration=duration,
                 currencyCode=flight['price']['currency'],
                 totalPrice=flight['price']['total'],
@@ -94,9 +102,11 @@ def offer_search_api(flight_req_id):
                 # Получаем информацию о аэропортах отправления и прибытия
                 dep_iata = segment['departure']['iataCode']
                 dep_airoport = IATA.objects.get(iata=dep_iata).city
+                dep_dateTime = isodate.parse_datetime(segment['departure']['at'])
 
                 arr_iata = segment['arrival']['iataCode']
                 arr_airoport = IATA.objects.get(iata=arr_iata).city
+                arr_dateTime = isodate.parse_datetime(segment['arrival']['at'])
                 
                 # Парсим продолжительность сегмента
                 try:
@@ -110,14 +120,15 @@ def offer_search_api(flight_req_id):
                     duration_seg = datetime.time(0, 0)  # Устанавливаем значение по умолчанию
                 
                 # Создаем сегмент рейса
+                #print(segment['departure']['at'], type(segment['departure']['at']))
                 FlightSegment(
                     offer=offer,
                     dep_iataCode=dep_iata,
                     dep_airport=dep_airoport,
-                    dep_dateTime=segment['departure']['at'],
+                    dep_dateTime=timezone.make_aware(dep_dateTime),
                     arr_iataCode=arr_iata,
                     arr_airport=arr_airoport,
-                    arr_dateTime=segment['arrival']['at'],
+                    arr_dateTime=timezone.make_aware(arr_dateTime),
                     carrierCode=segment['carrierCode'],
                     duration=duration_seg
                 ).save()

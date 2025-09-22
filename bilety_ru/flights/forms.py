@@ -5,10 +5,11 @@ from .models import FlightRequest
 class OfferSearchForm(forms.ModelForm):
     CURRENCY_CODES = [('EUR', '€'), ('RUB', '₽'), ('USD', '$')]
 
-    currencyCode = forms.ChoiceField(choices=CURRENCY_CODES, initial='EUR', label='Валюта', widget=forms.Select())
+    currencyCode = forms.ChoiceField(choices=CURRENCY_CODES, initial='RUB', label='Валюта', widget=forms.Select())
     # returnDate = forms.DateField(required=False)
     
     # Добавляем виджеты для выбора количества пассажиров с ограничениями
+    '''
     adults = forms.IntegerField(
         min_value=1, 
         max_value=9, 
@@ -29,7 +30,7 @@ class OfferSearchForm(forms.ModelForm):
         label='Младенцы (до 2 лет)',
         widget=forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'max': '9'})
     )
-
+    '''
     class Meta:
         model = FlightRequest
         fields = '__all__'
@@ -41,8 +42,16 @@ class OfferSearchForm(forms.ModelForm):
             'returnDate': 'Дата возвращения',
         }
         widgets = {
-            'departureDate': forms.SelectDateWidget(),
-            'returnDate': forms.SelectDateWidget(),
+            'departureDate': forms.DateInput(attrs={'type': 'date','class': 'form-control', 'style': 'width:10em;'}),
+            'returnDate': forms.DateInput(attrs={'type': 'date', 'class': 'form-control', 'style': 'width:10em;'}),
+            'originLocationCode': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Например, JFK', }),
+            'destinationLocationCode': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Например, LAX', }),
+            'currencyCode': forms.Select(attrs={'class': 'form-control'}),
+            'maxPrice': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Без ограничений'}),
+            'nonStop': forms.CheckboxInput(),
+            'adults': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'max': '9', 'size': '1', 'maxlength': '1', 'style': 'width:3em;'}),
+            'children': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'max': '9', 'size': '1', 'maxlength': '1', 'style': 'width:3em;'}),
+            'infants': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'max': '9', 'size': '1', 'maxlength': '1', 'style': 'width:3em;'}),
         }
 
 

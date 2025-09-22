@@ -11,54 +11,51 @@
 <div class="row">
     <div>
         <h2 class="mb-4">Поиск авиабилетов</h2>
-        <div class="search-form">
-                <form method="post" id="cityForm" class="row">
-                    {% csrf_token %}
-                    <div class="form-group col-md-4">
-                        {{ form.currencyCode.label }}:
-                        {{ form.currencyCode }}
+        <form method="post" id="cityForm">
+            {% csrf_token %}
+            <div class="search-form">
+                <div class="form-group col-md-4">
+                    {{ form.currencyCode.label }}:
+                    {{ form.currencyCode }}
+                </div>
+                <div class="form-group col-md-4">
+                    {{ form.originLocationCode.label }}:
+                    <div class="autocomplete">
+                        {{ form.originLocationCode }}
+                        <div id="originList" class="autocomplete-items"></div>
                     </div>
-                    <div class="form-group col-md-4">
-                        {{ form.originLocationCode.label }}:
-                        <div class="autocomplete">
-                            {{ form.originLocationCode }}
-                            <div id="originList" class="autocomplete-items"></div>
-                        </div>
+                </div>
+                <div class="form-group col-md-4">
+                    {{ form.destinationLocationCode.label }}:
+                    <div class="autocomplete">
+                        {{ form.destinationLocationCode }}
+                        <div id="destinationList" class="autocomplete-items"></div>
                     </div>
-                    <div class="form-group col-md-4">
-                        {{ form.destinationLocationCode.label }}:
-                        <div class="autocomplete">
-                            {{ form.destinationLocationCode }}
-                            <div id="destinationList" class="autocomplete-items"></div>
-                        </div>
-                    </div>
-                    <div class="form-group col-md-4">
-                        {{ form.departureDate.label }}:
-                        {{ form.departureDate }}
-                    </div>
-                    <div class="form-group col-md-4">
-                        {{ form.returnDate.label }}:
-                        {{ form.returnDate }}
-                    </div>
-                    <div class="form-group col-md-4">
-                        {{ form.adults.label }}:
-                        {{ form.adults }}
-                    </div>
-                    <div class="form-group col-md-4">
-                        {{ form.children.label }}:
-                        {{ form.children }}
-                    </div>
-                    <div class="form-group col-md-4">
-                        {{ form.infants.label }}:
-                        {{ form.infants }}
-                    </div>
-                    <div class="form-group col-md-12 text-center">
-                        <button type="submit" class="btn btn-primary">Найти билеты</button>
-                    </div>
-                </form>
+                </div>
+                <div class="form-group col-md-4">
+                    {{ form.departureDate.label }}:
+                    {{ form.departureDate }}
+                </div>
+                <div class="form-group col-md-4">
+                    {{ form.returnDate.label }}:
+                    {{ form.returnDate }}
+                </div>
+                <div class="form-group col-md-4">
+                    {{ form.adults.label }}:
+                    {{ form.adults }}
+                </div>
+                <div class="form-group col-md-4">
+                    {{ form.children.label }}:
+                    {{ form.children }}
+                </div>
+                <div class="form-group col-md-4">
+                    {{ form.infants.label }}:
+                    {{ form.infants }}
+                </div>
+                <div class="form-group col-md-12 text-center">
+                    <button type="submit" class="btn btn-primary">Найти билеты</button>
+                </div>
             </div>
-            
-            <!-- Блок с параметрами сортировки -->
             <div class="sorting-options">
                 <div class="sorting-header">
                     <h5>Параметры сортировки и фильтрации</h5>
@@ -67,49 +64,28 @@
                     </button>
                 </div>
                 <div class="sorting-body" id="sortingBody">
-                    <form id="sortingForm" class="row">
-                        <div class="form-group col-md-3">
-                            <label for="sortBy">Сортировать по:</label>
-                            <select class="form-control" id="sortBy" name="sortBy">
-                                <option value="price_asc">Цена (по возрастанию)</option>
-                                <option value="price_desc">Цена (по убыванию)</option>
-                                <option value="duration_asc">Длительность (короче)</option>
-                                <option value="duration_desc">Длительность (дольше)</option>
-                                <option value="departure_asc">Время вылета (раньше)</option>
-                                <option value="departure_desc">Время вылета (позже)</option>
-                            </select>
-                        </div>
-                        <div class="form-group col-md-3">
-                            <label for="maxPrice">Максимальная цена:</label>
-                            <input type="number" class="form-control" id="maxPrice" name="maxPrice" placeholder="Без ограничений">
-                        </div>
-                        <div class="form-group col-md-3">
-                            <label for="maxStops">Максимум пересадок:</label>
-                            <select class="form-control" id="maxStops" name="maxStops">
-                                <option value="any">Любое количество</option>
-                                <option value="0">Без пересадок</option>
-                                <option value="1">Не более 1</option>
-                                <option value="2">Не более 2</option>
-                            </select>
-                        </div>
-                        <div class="form-group col-md-3">
-                            <label for="airlines">Авиакомпании:</label>
-                            <select class="form-control" id="airlines" name="airlines" multiple>
-                                <option value="all" selected>Все авиакомпании</option>
-                                <option value="SU">Аэрофлот</option>
-                                <option value="S7">S7 Airlines</option>
-                                <option value="U6">Уральские авиалинии</option>
-                                <option value="DP">Победа</option>
-                            </select>
-                        </div>
-                        <div class="form-group col-md-12 text-center">
-                            <button type="button" class="btn btn-outline-primary btn-sm" id="applySorting">Применить</button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" id="resetSorting">Сбросить</button>
-                        </div>
-                    </form>
+                    <div class="form-group col-md-3">
+                        <label for="sortBy">Сортировать по:</label>
+                        <select class="form-control" id="sortBy" name="sortBy">
+                            <option value="price_asc">Цена (по возрастанию)</option>
+                            <option value="price_desc">Цена (по убыванию)</option>
+                            <option value="duration_asc">Длительность (короче)</option>
+                            <option value="duration_desc">Длительность (дольше)</option>
+                            <option value="departure_asc">Время вылета (раньше)</option>
+                            <option value="departure_desc">Время вылета (позже)</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-3">
+                        {{ form.maxPrice.label }}:
+                        {{ form.maxPrice }}
+                    </div>
+                    <div class="form-group col-md-3">
+                        {{ form.nonStop.label }}:
+                        {{ form.nonStop }}
+                    </div>
                 </div>
             </div>
-        </div>
+        </form>
     </div>
     <div class="row" id="flightResults">
         {% for offer in offers %}
