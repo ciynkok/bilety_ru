@@ -40,19 +40,19 @@ class FlightOffer(models.Model):
 
 class FlightSegment(models.Model):
     offer = models.ForeignKey(FlightOffer, on_delete=models.CASCADE)
-    # there_seg = models.BooleanField()
+    there_seg = models.BooleanField(default=True)
     dep_iataCode = models.CharField(max_length=3)
     dep_airport = models.CharField(max_length=50)
-    # dep_terminal = models.CharField(max_length=2)
+    dep_terminal = models.CharField(max_length=2, null=True)
     dep_dateTime = models.DateTimeField()
     arr_iataCode = models.CharField(max_length=3)
     arr_airport = models.CharField(max_length=50)
-    # arr_terminal = models.CharField(max_length=2)
+    arr_terminal = models.CharField(max_length=2, null=True)
     arr_dateTime = models.DateTimeField()
     carrierCode = models.CharField(max_length=2)
-    # number = models.CharField(max_length=4)
-    # aircraftCode = models.CharField(max_length=4)
-    # operating = models.CharField(max_length=2)
+    number = models.CharField(max_length=4, null=True)
+    aircraftCode = models.CharField(max_length=4, null=True)
+    operating = models.CharField(max_length=2, null=True)
     duration = models.TimeField()
     # id_seg = models.CharField(max_length=2)
 
@@ -84,3 +84,4 @@ class Booking(models.Model):
     
     def __str__(self):
         return f"Бронирование #{self.id} - {self.status}"
+
