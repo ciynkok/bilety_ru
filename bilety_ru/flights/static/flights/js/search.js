@@ -96,48 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
             destinationList.innerHTML = '';
         }
     });
-    
-    // Функция для получения результатов поиска рейсов
-    function fetchFlightOffers() {
-        document.getElementById('loadingSpinner').style.display = 'block';
-        
-        $.ajax({
-            url: '/api/flight-offers/',
-            type: 'GET',
-            dataType: 'json',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .done(function(data) {
-            document.getElementById('loadingSpinner').style.display = 'none';
-            
-            if (data.error) {
-                console.error('Error:', data.error);
-                const resultsContainer = document.getElementById('flightResults');
-                resultsContainer.innerHTML = `<div class="col-12"><div class="alert alert-danger">Ошибка: ${data.error}</div></div>`;
-                return;
-            }
-            
-            const resultsContainer = document.getElementById('flightResults');
-            resultsContainer.innerHTML = '';
-            
-            if (data.offers && data.offers.length > 0) {
-                data.offers.forEach(offer => {
-                    resultsContainer.appendChild(createFlightCard(offer));
-                });
-            } else {
-                resultsContainer.innerHTML = '<div class="col-12"><div class="alert alert-info">Нет доступных рейсов по вашему запросу.</div></div>';
-            }
-        })
-        .fail(function(error) {
-            console.error('Error:', error);
-            document.getElementById('loadingSpinner').style.display = 'none';
-            const resultsContainer = document.getElementById('flightResults');
-            resultsContainer.innerHTML = `<div class="col-12"><div class="alert alert-danger">Произошла ошибка при загрузке данных.</div></div>`;
-        });
-    }
-    
+    /*
     // Функция для создания карточки рейса
     function createFlightCard(offer) {
         const card = document.createElement('div');
@@ -200,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         return card;
     }
-    
+    */
     // Функция для получения CSRF-токена из cookie
     function getCookie(name) {
         let cookieValue = null;

@@ -98,7 +98,8 @@ class OffersSearch(FormView):
                 flight_req = FlightRequest.objects.filter(id=self.request.session['id_offer_search']).last()
                 if flight_req:
                     context['offers'] = FlightOffer.objects.filter(flightRequest=flight_req)
-                    context['segments'] = FlightSegment.objects.all()
+                    context['segments'] = FlightSegment.objects.filter(there_seg=True)
+                    context['return_segments'] = FlightSegment.objects.filter(there_seg=False)
                     context['last_search'] = flight_req
             except Exception as e:
                 # Логируем ошибку, но не позволяем ей прервать выполнение

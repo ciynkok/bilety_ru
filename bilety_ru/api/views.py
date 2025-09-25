@@ -3,7 +3,6 @@ import amadeus
 from django.http import JsonResponse
 from django.utils import timezone
 from django.forms.models import model_to_dict
-from .models import IATA
 from flights.models import FlightRequest, FlightOffer, FlightSegment
 import isodate
 import datetime
@@ -323,74 +322,6 @@ def check_flight_price(request, offer_id):
                     'currency': offer.currencyCode or 'EUR',
                 })
                 
-                # Получаем дополнительную информацию о рейсе для корректного отображения карточки
-                '''
-                segments = FlightSegment.objects.filter(offer=offer)
-                segments_data = []
-                
-                for segment in segments:
-                    try:
-                        # Получаем информацию об аэропортах
-                        departure_airport = get_airport_info(segment.dep_iataCode)
-                        arrival_airport = get_airport_info(segment.arr_iataCode)
-                        
-                        # Форматируем даты
-                        departure_at = None
-                        arrival_at = None
-                        
-                        if segment.dep_dateTime:
-                            departure_at = segment.dep_dateTime.strftime('%Y-%m-%dT%H:%M:%S')
-                        
-                        if segment.arr_dateTime:
-                            arrival_at = segment.arr_dateTime.strftime('%Y-%m-%dT%H:%M:%S')
-                        
-                        # Формируем данные о сегменте
-                        segment_data = {
-                            'id': segment.id,
-                            'departure': {
-                                'iataCode': segment.dep_iataCode or '',
-                                'airport': departure_airport.get('name', segment.dep_airport or 'Неизвестный аэропорт'),
-                                'city': departure_airport.get('city', 'Неизвестный город'),
-                                'country': departure_airport.get('country', 'Неизвестная страна'),
-                                'at': departure_at
-                            },
-                            'arrival': {
-                                'iataCode': segment.arr_iataCode or '',
-                                'airport': arrival_airport.get('name', segment.arr_airport or 'Неизвестный аэропорт'),
-                                'city': arrival_airport.get('city', 'Неизвестный город'),
-                                'country': arrival_airport.get('country', 'Неизвестная страна'),
-                                'at': arrival_at
-                            },
-                            'carrierCode': segment.carrierCode or '',
-                            'number': '',  # В модели нет поля number
-                            'duration': str(segment.duration) if segment.duration else '00:00',
-                            'aircraft': ''  # В модели нет поля aircraft
-                        }
-                        
-                        segments_data.append(segment_data)
-                    except Exception as e:
-                        print(f"Error processing segment: {e}")
-                
-                # Формируем полную информацию о рейсе
-                flight_data = {
-                    'id': offer.id,
-                    'price': {
-                        'total': current_price,
-                        'currency': offer.currencyCode or 'EUR'
-                    },
-                    'itineraries': [{
-                        'segments': segments_data,
-                        'duration': str(sum([segment.duration for segment in segments if segment.duration], datetime.timedelta()))
-                    }]
-                }
-                '''
-                return JsonResponse({
-                    'success': True,
-                    'price': current_price,
-                    'old_price': old_price,
-                    'price_diff': price_diff,
-                    'currency': offer.currencyCode or 'EUR',
-                })
             else:
                 return JsonResponse({
                     'success': False,
