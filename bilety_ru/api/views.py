@@ -96,40 +96,36 @@ def offer_search_api(flight_req_id):
             offer.save()
             
             # Обрабатываем каждый сегмент рейса
-            for segment in flight['itineraries'][0]['segments']:
-                # Получаем информацию о аэропортах отправления и прибытия
-                dep_iata = segment['departure']['iataCode']
-                dep_airoport = IATA.objects.get(iata=dep_iata).city
-                dep_dateTime = isodate.parse_datetime(segment['departure']['at'])
-
-                arr_iata = segment['arrival']['iataCode']
-                arr_airoport = IATA.objects.get(iata=arr_iata).city
-                arr_dateTime = isodate.parse_datetime(segment['arrival']['at'])
-                
-                # Парсим продолжительность сегмента
-                try:
-                    duration_seg = isodate.parse_duration(segment['duration'])
-                    duration_seg = datetime.time(
-                        hour=duration_seg.seconds // 3600, 
-                        minute=duration_seg.seconds // 60 % 60
-                    )
-                except (ValueError, TypeError) as e:
-                    print(f"Error parsing segment duration: {e}")
-                    duration_seg = datetime.time(0, 0)  # Устанавливаем значение по умолчанию
-                
-                # Создаем сегмент рейса
-                #print(segment['departure']['at'], type(segment['departure']['at']))
-                FlightSegment(
-                    offer=offer,
-                    dep_iataCode=dep_iata,
-                    dep_airport=dep_airoport,
-                    dep_dateTime=timezone.make_aware(dep_dateTime),
-                    arr_iataCode=arr_iata,
-                    arr_airport=arr_airoport,
-                    arr_dateTime=timezone.make_aware(arr_dateTime),
-                    carrierCode=segment['carrierCode'],
-                    duration=duration_seg
-                ).save()
+            for i in [0, 1]:
+                for segment in flight['itineraries'][i]['segments']:
+                    # Парсим продолжительность сегмента
+                    try:
+                        duration_seg = isodate.parse_duration(segment['duration'])
+                        duration_seg = datetime.time(
+                            hour=duration_seg.seconds // 3600, 
+                            minute=duration_seg.seconds // 60 % 60
+                        )
+                    except (ValueError, TypeError) as e:
+                        print(f"Error parsing segment duration: {e}")
+                        duration_seg = datetime.time(0, 0)  # Устанавливаем значение по умолчанию
+                    
+                    FlightSegment(
+                        offer=offer,
+                        there_seg=True if i == 0 else False,
+                        dep_iataCode=segment['departure']['iataCode'],
+                        dep_airport=getAirport(segment['departure']['iataCode']),
+                        dep_terminal='',
+                        dep_dateTime=isodate.parse_datetime(segment['departure']['at']),
+                        arr_iataCode=segment['arrival']['iataCode'],
+                        arr_airport=getAirport(segment['arrival']['iataCode']),
+                        arr_terminal='',
+                        arr_dateTime=isodate.parse_datetime(segment['arrival']['at']),
+                        carrierCode=segment['carrierCode'],
+                        number=segment['number'],
+                        aircraftCode=segment['aircraft']['code'],
+                        operating=segment['operating']['carrierCode'],
+                        duration=duration_seg
+                    ).save()
         
         return True
     except FlightRequest.DoesNotExist:
@@ -155,7 +151,8 @@ def get_structured_flight_offers(request):
         structured_offers = []
         for offer in offers:
             # Получаем все сегменты для данного предложения
-            segments = FlightSegment.objects.filter(offer=offer)
+            segments = FlightSegment.objects.filter(offer=offer, there_seg=True)
+            return_segments = FlightSegment.objects.filter(offer=offer, there_seg=False)
             
             # Структурируем данные для фронтенда
             offer_data = {
@@ -183,8 +180,22 @@ def get_structured_flight_offers(request):
                 }
                 
                 # Определяем, к какому направлению относится сегмент (туда/обратно)
-                # Пока что все сегменты считаем как outbound (туда)
                 offer_data['outbound'].append(segment_data)
+            
+            for segment in return_segments:
+                segment_data = {
+                    'departureAirport': segment.dep_iataCode,
+                    'departureCity': segment.dep_airport,
+                    'departureDateTime': segment.dep_dateTime.strftime('%Y-%m-%d %H:%M'),
+                    'arrivalAirport': segment.arr_iataCode,
+                    'arrivalCity': segment.arr_airport,
+                    'arrivalDateTime': segment.arr_dateTime.strftime('%Y-%m-%d %H:%M'),
+                    'duration': segment.duration.strftime('%H:%M'),
+                    'airline': segment.carrierCode,
+                    'airlineLogo': f"https://s1.apideeplink.com/images/airlines/{segment.carrierCode}.png"
+                }
+                
+                offer_data['inbound'].append(segment_data)
             
             structured_offers.append(offer_data)
         
@@ -204,6 +215,18 @@ def transform_airport(airport):
         airport[i] = airport[i].lower()
     airport = ''.join(airport)
     return airport
+
+
+def getAirport(iataCode):
+    response = c.reference_data.locations.get(keyword=iataCode, subType=amadeus.Location.AIRPORT)
+    if response.data:
+        data = response.data
+        if len(data) > 0:
+            return(transform_airport(data[0]['address']['cityName']))
+        else:
+            return None
+    else:
+        return None
 
 
 class SearchAirports(APIView):
@@ -447,46 +470,6 @@ def create_flight_order(request, offer_id):
         return JsonResponse({'error': 'Invalid JSON data'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
-
-def get_airport_info(iata_code):
-    """
-    Вспомогательная функция для получения информации об аэропорте по его IATA-коду
-    С кэшированием для уменьшения количества запросов к API
-    """
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.info(f"Getting airport info for IATA code: {iata_code}")
-    
-    from django.core.cache import cache
-    
-    if not iata_code:
-        logger.warning("Empty IATA code provided")
-        return {'name': 'Unknown', 'city': 'Unknown', 'country': ''}
-    
-    # Проверяем наличие в кэше
-    cache_key = f"airport_{iata_code}"
-    airport_info = cache.get(cache_key)
-    
-    if airport_info:
-        logger.info(f"Found airport info in cache for {iata_code}")
-        return airport_info
-    
-    logger.info(f"Airport info not found in cache for {iata_code}, requesting from API")
-    
-    # Вместо запроса к API возвращаем базовые данные
-    # Это упрощение позволит избежать ошибок при вызове API
-    default_info = {
-        'name': f"{iata_code} Airport",
-        'city': iata_code,
-        'country': ''
-    }
-    
-    # Сохраняем в кэш на 24 часа
-    cache.set(cache_key, default_info, 60*60*24)
-    logger.info(f"Saved default airport info to cache for {iata_code}")
-    
-    return default_info
 
 
 def get_flight_details(request, offer_id):

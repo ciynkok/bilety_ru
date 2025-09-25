@@ -130,6 +130,40 @@
                 </p>
                 {% endif %}
                 {% endfor %}
+                <p>
+                    Маршрут обратно:
+                </p>
+                {% for segment in return_segments %}
+                {% if segment.offer.id == offer.id %}
+                <p class="flight-segment">
+                    <div class="d-flex align-items-center">
+                        <div class="w-100">
+                            <div class="context-segment">
+                                <div>
+                                    <strong>{{segment.dep_dateTime|date:"d.m.Y H:i"}}</strong> 
+                                    <!--<span class="text-muted">{{segment.dep_airport}}</span>-->
+                                </div>
+                                <div class="flight-duration text-center">
+                                    <div class="small text-muted">Длительность</div>
+                                    <div>{{segment.duration}}</div>
+                                </div>
+                                <div class="text-right">
+                                    <strong>{{segment.arr_dateTime|date:"d.m.Y H:i"}}</strong> 
+                                    <!--<span class="text-muted">{{segment.arr_airport}}</span>-->
+                                </div>
+                            </div>
+                            <div class="progress mt-2" style="height: 2px;">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: 100%"></div>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted mt-1">
+                                <div>{{segment.dep_airport}}</div>
+                                <div>{{segment.arr_airport}}</div>
+                            </div>
+                        </div>
+                    </div>
+                </p>
+                {% endif %}
+                {% endfor %}
                 <div class="text-center mt-3">
                     <a href="/booking/{{offer.id}}/" class="btn book-button">
                         Оформить
