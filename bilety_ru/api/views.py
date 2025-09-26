@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.forms.models import model_to_dict
 from flights.models import FlightRequest, FlightOffer, FlightSegment
+from .models import IATA
 import isodate
 import datetime
 import json
@@ -37,7 +38,7 @@ def offer_search_api(flight_req_id):
     try:
         # Проверяем существование запроса
         flight_req = FlightRequest.objects.get(id=flight_req_id)
-
+        #print(flight_req)
         # Преобразуем модель в словарь для передачи в API
         kwargs = model_to_dict(flight_req)
         d = {}
@@ -51,7 +52,6 @@ def offer_search_api(flight_req_id):
 
         # Выполняем поиск рейсов
         search_flights = c.shopping.flight_offers_search.get(**d)
-
         # Проверяем, есть ли результаты
         if not search_flights.data:
             print(f"No flights found for request ID: {flight_req_id}")
@@ -80,8 +80,8 @@ def offer_search_api(flight_req_id):
             offer = FlightOffer(
                 flightRequest=flight_req,
                 adults_count=flight_req.adults,
-                dep_duration=timezone.make_aware(isodate.parse_datetime(segment1['departure']['at'])),
-                arr_duration=timezone.make_aware(isodate.parse_datetime(segment_last['arrival']['at'])),
+                dep_duration=isodate.parse_datetime(segment1['departure']['at']),
+                arr_duration=isodate.parse_datetime(segment_last['arrival']['at']),
                 duration=duration,
                 currencyCode=flight['price']['currency'],
                 totalPrice=flight['price']['total'],
@@ -107,7 +107,6 @@ def offer_search_api(flight_req_id):
                     except (ValueError, TypeError) as e:
                         print(f"Error parsing segment duration: {e}")
                         duration_seg = datetime.time(0, 0)  # Устанавливаем значение по умолчанию
-                    
                     FlightSegment(
                         offer=offer,
                         there_seg=True if i == 0 else False,
@@ -125,7 +124,6 @@ def offer_search_api(flight_req_id):
                         operating=segment['operating']['carrierCode'],
                         duration=duration_seg
                     ).save()
-        
         return True
     except FlightRequest.DoesNotExist:
         print(f"FlightRequest with ID {flight_req_id} does not exist")
@@ -217,15 +215,8 @@ def transform_airport(airport):
 
 
 def getAirport(iataCode):
-    response = c.reference_data.locations.get(keyword=iataCode, subType=amadeus.Location.AIRPORT)
-    if response.data:
-        data = response.data
-        if len(data) > 0:
-            return(transform_airport(data[0]['address']['cityName']))
-        else:
-            return None
-    else:
-        return None
+    data = IATA.objects.get(iata=iataCode)
+    return data.city
 
 
 class SearchAirports(APIView):
@@ -264,8 +255,8 @@ class CheckPriceView(APIView):
         offer = FlightOffer.objects.get(id=offer_id)
         try:
             response = c.shopping.flight_offers.pricing.post(offer.data)
-            print(response.data)
-            print(response.data['flightOffers'][0]['price']['total'])
+            #print(response.data)
+            #print(response.data['flightOffers'][0]['price']['total'])
             if response and 'flightOffers' in response.data and len(response.data['flightOffers']) > 0:
                 current_price = float(response.data['flightOffers'][0]['price']['total'])
                 return JsonResponse({

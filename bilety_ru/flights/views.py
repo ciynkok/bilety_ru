@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from .forms import OfferSearchForm
 from django.shortcuts import render, redirect, HttpResponseRedirect, reverse, HttpResponse
 from .models import FlightOffer, FlightRequest, FlightSegment
+from api.models import IATA
 from django.views.generic.edit import CreateView, View, FormView
 from django.views.generic import TemplateView
 from django.utils import timezone
@@ -10,10 +11,18 @@ from django.http import JsonResponse
 import datetime
 import json
 from api.views import get_cities, offer_search_api, create_flight_order
+import pandas as pd
 
 
-c = amadeus.Client(client_id='1otgEUauKpjxxGPcPxSQvvsRz7o3fxv1',
-                   client_secret='VgqvL5c92wzXcPgV')
+def index(request):
+    data = pd.read_csv('uploads/airports.csv')
+    print(data.keys())
+    #IATA.objects.all().delete()
+    #iata = IATA.objects.get(city='The Bronx') 
+    #IATA.objects.filter(id__lt=9804).delete()
+    #for i in range(0, len(data)):
+        #IATA(id=i + 1 ,iata=data['IATA'][i], name=data['Airport name'][i], city=data['City'][i], state=data['Country'][i]).save()
+    return render(request, 'flights/search.html')
 
 
 class OffersSearch(FormView):
@@ -66,9 +75,6 @@ class OffersSearch(FormView):
         # Обрабатываем коды аэропортов
         flight_request.originLocationCode = flight_request.originLocationCode[:3].upper()
         flight_request.destinationLocationCode = flight_request.destinationLocationCode[:3].upper()
-        flight_request.departureDate = timezone.make_aware(datetime.datetime.combine(flight_request.departureDate, datetime.time.min))
-        if flight_request.returnDate:
-            flight_request.returnDate = timezone.make_aware(datetime.datetime.combine(flight_request.returnDate, datetime.time.min))
 
         
         # Сохраняем запрос и устанавливаем его ID в сессию
@@ -90,7 +96,7 @@ class OffersSearch(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+        context['iata'] = IATA.objects.first()
         # Получаем результаты последнего поиска
         if 'id_offer_search' in self.request.session:
         

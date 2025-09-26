@@ -1,6 +1,5 @@
 from django.db import models
 
-# Create your models here.
 
 class IATA(models.Model):
     iata = models.CharField(max_length=3)
