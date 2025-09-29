@@ -6,6 +6,7 @@ import datetime
 
 
 class FlightRequest(models.Model):
+    SORT_PARMS = (('price_asc', 'Цене'), ('duration_asc', 'Длительности'), ('departure_asc', 'Времени вылета'))
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     session_key = models.CharField(max_length=40, blank=True)  # Для хранения ключа сессии
     currencyCode = models.CharField(max_length=50)
@@ -21,7 +22,8 @@ class FlightRequest(models.Model):
     excludedAirlines = models.CharField(max_length=200, null=True, blank=True)
     travelClass = models.CharField(max_length=50, null=True, blank=True)
     nonStop = models.BooleanField(null=True, blank=True)
-    maxPrice = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    maxPrice = models.IntegerField(null=True, blank=True)
+    sortParam = models.CharField(max_length=50, choices=SORT_PARMS, default='price_asc')
     created_at = models.DateTimeField(auto_now_add=True)  # Новое поле для времени создания
 
 
@@ -35,6 +37,7 @@ class FlightOffer(models.Model):
     duration = models.TimeField()
     currencyCode = models.CharField(max_length=3)
     totalPrice = models.DecimalField(max_digits=10, decimal_places=2)
+    oneWay = models.BooleanField(default=False)
     data = models.JSONField()
 
 

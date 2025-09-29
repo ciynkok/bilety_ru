@@ -9,7 +9,7 @@
 
 {% block content %}
 <div class="row">
-    {{ iata }}
+    {{ data }}
     <div>
         <h2 class="mb-4">Поиск авиабилетов</h2>
         <form method="post" id="cityForm">
@@ -66,7 +66,9 @@
                 </div>
                 <div class="sorting-body" id="sortingBody">
                     <div class="form-group col-md-3">
-                        <label for="sortBy">Сортировать по:</label>
+                        {{ form.sortParam.label }}
+                        {{ form.sortParam }}
+                        <!--<label for="sortBy">Сортировать по:</label>
                         <select class="form-control" id="sortBy" name="sortBy">
                             <option value="price_asc">Цена (по возрастанию)</option>
                             <option value="price_desc">Цена (по убыванию)</option>
@@ -74,7 +76,7 @@
                             <option value="duration_desc">Длительность (дольше)</option>
                             <option value="departure_asc">Время вылета (раньше)</option>
                             <option value="departure_desc">Время вылета (позже)</option>
-                        </select>
+                        </select>-->
                     </div>
                     <div class="form-group col-md-3">
                         {{ form.maxPrice.label }}:

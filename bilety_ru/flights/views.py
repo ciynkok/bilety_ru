@@ -11,9 +11,8 @@ from django.http import JsonResponse
 import datetime
 import json
 from api.views import get_cities, offer_search_api, create_flight_order
-import pandas as pd
 
-
+'''
 def index(request):
     data = pd.read_csv('uploads/airports.csv')
     print(data.keys())
@@ -23,7 +22,7 @@ def index(request):
     #for i in range(0, len(data)):
         #IATA(id=i + 1 ,iata=data['IATA'][i], name=data['Airport name'][i], city=data['City'][i], state=data['Country'][i]).save()
     return render(request, 'flights/search.html')
-
+'''
 
 class OffersSearch(FormView):
     template_name = 'flights/search.html'
@@ -96,14 +95,14 @@ class OffersSearch(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['iata'] = IATA.objects.first()
+        #context['iata'] = IATA.objects.first()
         # Получаем результаты последнего поиска
+        #context['data'] = FlightOffer.objects.first().data
         if 'id_offer_search' in self.request.session:
-        
             try:
                 flight_req = FlightRequest.objects.filter(id=self.request.session['id_offer_search']).last()
                 if flight_req:
-                    context['offers'] = FlightOffer.objects.filter(flightRequest=flight_req)
+                    context['offers'] = get_offers(flight_req)
                     context['segments'] = FlightSegment.objects.filter(there_seg=True)
                     context['return_segments'] = FlightSegment.objects.filter(there_seg=False)
                     context['last_search'] = flight_req
@@ -118,6 +117,22 @@ class OffersSearch(FormView):
         return context
 
 
+def get_offers(request):
+    #request = FlightRequest.objects.filter(id=id_request).last()
+    sort_parm = request.sortParam
+    match sort_parm:
+        case 'price_asc':
+            res =  FlightOffer.objects.filter(flightRequest=request).order_by('-totalPrice')[:5]
+        case 'duration_asc':
+            res = FlightOffer.objects.filter(flightRequest=request).order_by('-duration')[:5]
+        case 'departure_asc':
+            res = FlightOffer.objects.filter(flightRequest=request).order_by('-dep_duration')[:5]
+    if request.nonStop:
+        return res
+    else:
+        return res
+
+'''
 class ClearSearchHistoryView(View):
     """
     Представление для очистки истории поисковых запросов пользователя
@@ -170,3 +185,4 @@ class BookingSuccessView(TemplateView):
             context['error'] = f'Бронирование не найдено или произошла ошибка: {str(e)}'
             
         return context
+'''

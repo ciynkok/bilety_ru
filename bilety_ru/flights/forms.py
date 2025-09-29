@@ -40,6 +40,12 @@ class OfferSearchForm(forms.ModelForm):
             'destinationLocationCode': 'Аэропорт прибытия',
             'departureDate': 'Дата отправления',
             'returnDate': 'Дата возвращения',
+            'maxPrice': 'Максимальная цена',
+            'nonStop': 'В первую очередь без пересадок',
+            'adults': 'Взрослые',
+            'children': 'Дети до 12',
+            'infants': 'Младенцы',
+            'sortParam': 'Сортировать по'
         }
         widgets = {
             'departureDate': forms.DateInput(attrs={'type': 'date','class': 'form-control', 'style': 'width:10em;'}),
@@ -52,6 +58,7 @@ class OfferSearchForm(forms.ModelForm):
             'adults': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'max': '9', 'size': '1', 'maxlength': '1', 'style': 'width:3em;'}),
             'children': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'max': '9', 'size': '1', 'maxlength': '1', 'style': 'width:3em;'}),
             'infants': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'max': '9', 'size': '1', 'maxlength': '1', 'style': 'width:3em;'}),
+            'sortParam': forms.Select(attrs={'class': 'form-control'})
         }
 
 

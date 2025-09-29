@@ -43,15 +43,16 @@ def offer_search_api(flight_req_id):
         kwargs = model_to_dict(flight_req)
         d = {}
         for key in kwargs.keys():
-           if kwargs[key] is not None and key not in ['id', 'user', 'session_key', 'created_at', 'nonStop']:
+           if kwargs[key] is not None and key not in ['id', 'user', 'session_key', 'created_at', 'nonStop', 'sortParam']:
               d[key] = kwargs[key]
         
         # Ограничиваем количество результатов
-        d['max'] = 6
-
-
+        d['max'] = 10
         # Выполняем поиск рейсов
+        print(1)
         search_flights = c.shopping.flight_offers_search.get(**d)
+        print(2)
+        #print(search_flights.data[0])
         # Проверяем, есть ли результаты
         if not search_flights.data:
             print(f"No flights found for request ID: {flight_req_id}")
@@ -85,6 +86,7 @@ def offer_search_api(flight_req_id):
                 duration=duration,
                 currencyCode=flight['price']['currency'],
                 totalPrice=flight['price']['total'],
+                oneWay=flight['oneWay'],
                 data=flight,
             )
             # Проверяем наличие атрибутов children и infants у объекта flight_req
@@ -213,10 +215,11 @@ def transform_airport(airport):
     airport = ''.join(airport)
     return airport
 
-
+# data = IATA.objects.get(iata=iataCode)
+# return data.city
 def getAirport(iataCode):
-    data = IATA.objects.get(iata=iataCode)
-    return data.city
+    data = 'None'
+    return data
 
 
 class SearchAirports(APIView):
