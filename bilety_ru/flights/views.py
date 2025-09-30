@@ -52,9 +52,9 @@ class OffersSearch(FormView):
                          'nonStop', 'maxPrice']:
                 if hasattr(last_request, field) and getattr(last_request, field) is not None:
                     initial[field] = getattr(last_request, field)
-        else:
-            initial['departureDate'] = datetime.date.today()
-            initial['returnDate'] = datetime.date.today() + datetime.timedelta(days=7)
+        #else:
+            #initial['departureDate'] = datetime.date.today()
+            #initial['returnDate'] = datetime.date.today() + datetime.timedelta(days=7)
 
         return initial
     
@@ -122,15 +122,15 @@ def get_offers(request):
     sort_parm = request.sortParam
     match sort_parm:
         case 'price_asc':
-            res =  FlightOffer.objects.filter(flightRequest=request).order_by('-totalPrice')[:5]
+            parm = 'totalPrice'
         case 'duration_asc':
-            res = FlightOffer.objects.filter(flightRequest=request).order_by('-duration')[:5]
+            parm = 'duration'
         case 'departure_asc':
-            res = FlightOffer.objects.filter(flightRequest=request).order_by('-dep_duration')[:5]
+            parm = 'dep_duration'
     if request.nonStop:
-        return res
+        return FlightOffer.objects.filter(flightRequest=request).order_by('-oneWay', parm)[:6]
     else:
-        return res
+        return FlightOffer.objects.filter(flightRequest=request).order_by(parm)[:6]
 
 '''
 class ClearSearchHistoryView(View):

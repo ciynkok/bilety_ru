@@ -1,5 +1,177 @@
 // Функция для автозаполнения полей поиска аэропортов
+/*
+class FlightSearch {
+    constructor() {
+        this.origin = document.getElementById('id_originLocationCode');
+        this.destination = document.getElementById('id_destinationLocationCode');
+        this.departureDate = document.getElementById('id_departureDate');
+        this.returnDate = document.getElementById('id_returnDate');
+        this.departurePrices = document.getElementById('departure-prices');
+        this.returnPrices = document.getElementById('return-prices');
+        this.flightData = {
+            'origin': null,
+            'destination': null
+        }
+        this.initEventListeners();
+    }
+
+    initEventListeners() {
+        // Запрос цен при фокусе на поле даты вылета
+        this.departureDate.addEventListener('focus', () => {
+            this.fetchPrices('departure');
+        });
+
+        // Запрос цен при фокусе на поле даты возвращения
+        this.returnDate.addEventListener('focus', () => {
+            this.fetchPrices('return');
+        });
+
+        // Обновление цен при изменении городов
+        this.origin.addEventListener('change', this.clearPrices.bind(this));
+        this.destination.addEventListener('change', this.clearPrices.bind(this));
+    }
+
+    async fetchPrices(type) {
+        const origin = this.origin.value.trim();
+        const destination = this.destination.value.trim();
+        const response = {};
+
+        if (!origin || !destination) {
+            this.showMessage('Введите города вылета и прилета', type);
+            return;
+        }
+
+        const requestData = {
+            origin: origin,
+            destination: destination
+        };
+
+        // Добавляем дату только если она выбрана
+        if (type === 'departure' && this.departureDate.value) {
+            requestData.departure_date = this.departureDate.value;
+        } else if (type === 'return' && this.returnDate.value) {
+            requestData.return_date = this.returnDate.value;
+        }
+        
+        
+        try {
+            this.showLoading(type);
+
+            
+            $.ajax({
+                url: `/api/flight-prices/?origin=${requestData.origin}&destination=${requestData.destination}`,
+                type: 'GET',
+                dataType: 'json',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }  
+            })
+            .done(function(data){
+                console.log(data.origin, data.destination);
+                response.origin = data.origin;
+                response.destination = data.destination;
+                console.log(response);
+
+                const container = type === 'departure' ? this.departurePrices : this.returnPrices;
+                //console.log(flights)
+                if (response.length === 0) {
+                    container.innerHTML = '<div class="price-item">Рейсов не найдено</div>';
+                    return;
+                }
+                let html = '<div class="prices-container">';
+                
+                response.forEach(flight => {
+                    const departure = flight.itineraries[0];
+                    const price = flight.price;
+                    
+                    html += `
+                        <div class="price-item">
+                            <div class="price">${price.total} ${price.currency}</div>
+                            <div class="route">${departure.segments[0].departure_airport} → ${departure.segments[0].arrival_airport}</div>
+                            <div class="time">${formatTime(departure.segments[0].departure_time)}</div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                container.innerHTML = html;
+            })
+            
+            //console.log(data)
+            //this.displayPrices(data, type);
+
+            const response = await fetch('/api/flight-prices/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCsrfToken()
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.displayPrices(data, type);
+            } else {
+                this.showMessage(`Ошибка: ${data.error}`, type);
+            }
+                
+        } catch (error) {
+            this.showMessage('Ошибка соединения', type);
+            console.error('Error:', error);
+        }
+    }
+
+    displayPrices(flights, type) {
+        const container = type === 'departure' ? this.departurePrices : this.returnPrices;
+        //console.log(flights)
+        if (flights.length === 0) {
+            container.innerHTML = '<div class="price-item">Рейсов не найдено</div>';
+            return;
+        }
+
+        let html = '<div class="prices-container">';
+        
+        flights.forEach(flight => {
+            const departure = flight.itineraries[0];
+            const price = flight.price;
+            
+            html += `
+                <div class="price-item">
+                    <div class="price">${price.total} ${price.currency}</div>
+                    <div class="route">${departure.segments[0].departure_airport} → ${departure.segments[0].arrival_airport}</div>
+                    <div class="time">${this.formatTime(departure.segments[0].departure_time)}</div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    showMessage(message, type) {
+        const container = type === 'departure' ? this.departurePrices : this.returnPrices;
+        container.innerHTML = `<div class="message">${message}</div>`;
+    }
+
+    showLoading(type) {
+        const container = type === 'departure' ? this.departurePrices : this.returnPrices;
+        container.innerHTML = '<div class="loading">Поиск цен...</div>';
+    }
+
+    clearPrices() {
+        this.departurePrices.innerHTML = '';
+        this.returnPrices.innerHTML = '';
+    }
+
+    getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    }
+}
+*/
 document.addEventListener('DOMContentLoaded', function() {
+    //new FlightSearch();
     const originInput = document.getElementById('id_originLocationCode');
     const destinationInput = document.getElementById('id_destinationLocationCode');
     const originList = document.getElementById('originList');
@@ -96,124 +268,6 @@ document.addEventListener('DOMContentLoaded', function() {
             destinationList.innerHTML = '';
         }
     });
-    /*
-    // Функция для создания карточки рейса
-    function createFlightCard(offer) {
-        const card = document.createElement('div');
-        card.className = 'col-md-6 mb-4';
-        
-        let segmentsHtml = '';
-        offer.outbound.forEach(segment => {
-            segmentsHtml += `
-                <div class="flight-segment">
-                    <div class="d-flex align-items-center">
-                        <img src="${segment.airlineLogo || 'https://via.placeholder.com/30?text=' + segment.airline}" alt="${segment.airline}" class="airline-logo">
-                        <div class="w-100">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>${segment.departureDateTime.substr(11, 5)}</strong> 
-                                    <span class="text-muted">${segment.departureAirport}</span>
-                                </div>
-                                <div class="flight-duration text-center">
-                                    <div class="small text-muted">Длительность</div>
-                                    <div>${segment.duration}</div>
-                                </div>
-                                <div class="text-right">
-                                    <strong>${segment.arrivalDateTime.substr(11, 5)}</strong> 
-                                    <span class="text-muted">${segment.arrivalAirport}</span>
-                                </div>
-                            </div>
-                            <div class="progress mt-2" style="height: 2px;">
-                                <div class="progress-bar bg-primary" role="progressbar" style="width: 100%"></div>
-                            </div>
-                            <div class="d-flex justify-content-between small text-muted mt-1">
-                                <div>${segment.departureCity}</div>
-                                <div>${segment.arrivalCity}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        
-        card.innerHTML = `
-            <div class="card flight-card h-100">
-                <div class="flight-header d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="flight-price">${offer.totalPrice} ${offer.currencyCode}</span>
-                    </div>
-                    <div>
-                        <span class="badge badge-info">Общее время: ${offer.duration}</span>
-                    </div>
-                </div>
-                <div class="flight-body">
-                    ${segmentsHtml}
-                    <div class="text-center mt-3">
-                        <a href="/booking/${offer.id}/" class="btn book-button">
-                            <i class="fas fa-ticket-alt mr-2"></i>Оформить
-                        </a>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        return card;
-    }
-    */
-    // Функция для получения CSRF-токена из cookie
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-    
-    // Обработчик отправки формы поиска
-    /*
-    const searchForm = document.getElementById('cityForm');
-    if (searchForm) {
-        searchForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            document.getElementById('loadingSpinner').style.display = 'block';
-            
-            const formData = new FormData(this);
-            const csrftoken = getCookie('csrftoken');
-            
-            // Используем jQuery для отправки запроса, так как в базовом шаблоне мы настроили CSRF для jQuery
-            $.ajax({
-                url: '/',
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .done(function(response) {
-                // После успешной отправки формы запрашиваем данные о рейсах
-                setTimeout(fetchFlightOffers, 1000); // Даем время на обработку запроса на сервере
-            })
-            .fail(function(error) {
-                console.error('Error:', error);
-                document.getElementById('loadingSpinner').style.display = 'none';
-            });
-        });
-    }
-    */
-    // Проверяем, есть ли результаты поиска в сессии при загрузке страницы
-    //if (document.getElementById('flightResults')) {
-      //  fetchFlightOffers();
-    //}
     
     // Функциональность для блока параметров сортировки
     const toggleSortingBtn = document.getElementById('toggleSortingOptions');

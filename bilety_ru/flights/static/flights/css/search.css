@@ -231,3 +231,42 @@
         margin-bottom: 15px;
     }
 }
+
+.prices-container {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 5px;
+}
+
+.price-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+.price-item:hover {
+    background-color: #f5f5f5;
+}
+
+.price-item:last-child {
+    border-bottom: none;
+}
+
+.price {
+    font-weight: bold;
+    color: #e74c3c;
+}
+
+.route, .time {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.loading, .message {
+    padding: 10px;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}

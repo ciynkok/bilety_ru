@@ -133,9 +133,11 @@
                 </p>
                 {% endif %}
                 {% endfor %}
+                {% if return_segments %}
                 <p>
                     Маршрут обратно:
                 </p>
+                {% endif %}
                 {% for segment in return_segments %}
                 {% if segment.offer.id == offer.id %}
                 <p class="flight-segment">

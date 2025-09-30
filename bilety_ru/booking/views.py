@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from django.views.generic import TemplateView
 from flights.models import FlightOffer, FlightSegment
+from django.urls import reverse
+from django.http import HttpResponseRedirect
 
 # Create your views here.
 
@@ -23,7 +25,7 @@ class BookingView(TemplateView):
             segments = FlightSegment.objects.filter(offer=offer)
             context['segments'] = segments
 
-            print(segments.first().dep_airport)
+            #print(segments.first().dep_airport)
 
             context['dep_airport'] = segments.first().dep_airport
             context['dep_iataCode'] = segments.first().dep_iataCode
@@ -108,6 +110,9 @@ class BookingView(TemplateView):
                     'documentType': form_data.get(f'adult_{i}_document_type', ''),
                     'documentNumber': form_data.get(f'adult_{i}_document_number', '')
                 }
+                if passenger['documentType'] == 'ID_CARD':
+                    passenger['documentSeries'] = form_data.get(f'adult_{i}_document_series', '')
+                    passenger['twoLetters'] = form_data.get(f'adult_{i}_two_letters', '')
                 passengers.append(passenger)
             
             # Собираем данные о детях
@@ -118,8 +123,12 @@ class BookingView(TemplateView):
                     'firstName': form_data.get(f'child_{i}_first_name', ''),
                     'lastName': form_data.get(f'child_{i}_last_name', ''),
                     'dateOfBirth': form_data.get(f'child_{i}_dob', ''),
-                    'gender': form_data.get(f'child_{i}_gender', '')
+                    'gender': form_data.get(f'child_{i}_gender', ''),
+                    'documentNumber': form_data.get(f'child_{i}_document_number', '')
                 }
+                if passenger['documentType'] == 'ID_CARD':
+                    passenger['documentSeries'] = form_data.get(f'child_{i}_document_series', '')
+                    passenger['twoLetters'] = form_data.get(f'child_{i}_two_letters', '')
                 passengers.append(passenger)
             
             # Собираем данные о младенцах
@@ -130,8 +139,12 @@ class BookingView(TemplateView):
                     'firstName': form_data.get(f'infant_{i}_first_name', ''),
                     'lastName': form_data.get(f'infant_{i}_last_name', ''),
                     'dateOfBirth': form_data.get(f'infant_{i}_dob', ''),
-                    'gender': form_data.get(f'infant_{i}_gender', '')
+                    'gender': form_data.get(f'infant_{i}_gender', ''),
+                    'documentNumber': form_data.get(f'infant_{i}_document_number', '')
                 }
+                if passenger['documentType'] == 'ID_CARD':
+                    passenger['documentSeries'] = form_data.get(f'infant_{i}_document_series', '')
+                    passenger['twoLetters'] = form_data.get(f'infant_{i}_two_letters', '')
                 passengers.append(passenger)
             
             # Получаем контактные данные
@@ -160,9 +173,8 @@ class BookingView(TemplateView):
             booking.save()
             
             # Перенаправляем на страницу успешного бронирования
-            from django.urls import reverse
-            from django.http import HttpResponseRedirect
-            return HttpResponseRedirect(reverse('flights:booking_success', kwargs={'booking_id': booking.id}))
+            
+            return HttpResponseRedirect(reverse('booking:booking_success', kwargs={'booking_id': booking.id}))
             
         except FlightOffer.DoesNotExist:
             context = self.get_context_data(**kwargs)
@@ -175,7 +187,7 @@ class BookingView(TemplateView):
         
 
 class BookingSuccessView(TemplateView):
-    template_name = 'flights/booking_success.html'
+    template_name = 'booking/booking_success.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
