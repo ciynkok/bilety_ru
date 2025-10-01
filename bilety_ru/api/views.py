@@ -48,14 +48,14 @@ def offer_search_api(flight_req_id):
               d[key] = kwargs[key]
         
         # Ограничиваем количество результатов
-        d['max'] = 6
+        d['max'] = 2
         #d['travelClass'] = 'ECONOMY'
         # Выполняем поиск рейсов
         #print(1)
-        print(d)
+        #print(d)
         search_flights = c.shopping.flight_offers_search.get(**d)
-        print(2)
-        print(search_flights.data)
+        #print(2)
+        #print(search_flights.data)
         # Проверяем, есть ли результаты
         if not search_flights.data:
             print(f"No flights found for request ID: {flight_req_id}")
@@ -77,7 +77,7 @@ def offer_search_api(flight_req_id):
             except (ValueError, TypeError) as e:
                 print(f"Error parsing duration: {e}")
                 duration = datetime.time(0, 0)  # Устанавливаем значение по умолчанию
-            
+            #print(flight['itineraries'][0]['duration'], duration)
             # Создаем предложение рейса
             #print(segment1['departure']['at'], type(segment1['departure']['at']))
             #print(isodate.parse_date(segment1['departure']['at']), type(isodate.parse_date(segment1['departure']['at'])))
@@ -98,6 +98,7 @@ def offer_search_api(flight_req_id):
             if hasattr(flight_req, 'infants') and flight_req.infants is not None:
                 offer.infants_count = flight_req.infants
             offer.save()
+            #print(offer.duration)
             
             # Обрабатываем каждый сегмент рейса
             for i in range(len(flight['itineraries'])):
@@ -112,16 +113,19 @@ def offer_search_api(flight_req_id):
                     except (ValueError, TypeError) as e:
                         print(f"Error parsing segment duration: {e}")
                         duration_seg = datetime.time(0, 0)  # Устанавливаем значение по умолчанию
+                    #print(segment)
+                    dep_terminal = '' if not('terminal' in segment['departure']) else segment['departure']['terminal']
+                    arr_terminal = '' if not('terminal' in segment['arrival']) else segment['arrival']['terminal'] 
                     FlightSegment(
                         offer=offer,
                         there_seg=True if i == 0 else False,
                         dep_iataCode=segment['departure']['iataCode'],
                         dep_airport=getAirport(segment['departure']['iataCode']),
-                        dep_terminal='',
+                        dep_terminal=dep_terminal,
                         dep_dateTime=isodate.parse_datetime(segment['departure']['at']),
                         arr_iataCode=segment['arrival']['iataCode'],
                         arr_airport=getAirport(segment['arrival']['iataCode']),
-                        arr_terminal='',
+                        arr_terminal=arr_terminal,
                         arr_dateTime=isodate.parse_datetime(segment['arrival']['at']),
                         carrierCode=segment['carrierCode'],
                         number=segment['number'],
@@ -129,6 +133,7 @@ def offer_search_api(flight_req_id):
                         operating=segment['operating']['carrierCode'],
                         duration=duration_seg
                     ).save()
+                    #print('success')
         return True
     except FlightRequest.DoesNotExist:
         print(f"FlightRequest with ID {flight_req_id} does not exist")

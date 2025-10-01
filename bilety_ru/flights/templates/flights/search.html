@@ -98,7 +98,7 @@
                     <span class="flight-price">{{offer.totalPrice}} {{offer.currencyCode}}</span>
                 </div>
                 <div>
-                    <span class="badge badge-info">Общее время: {{offer.duration}}</span>
+                    <span class="badge badge-info">Общее время: {{offer.duration|time:"H:i"}}</span>
                 </div>
             </div>
             <div class="flight-body">

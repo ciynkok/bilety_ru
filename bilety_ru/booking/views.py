@@ -1,8 +1,14 @@
 from django.shortcuts import render
 from django.views.generic import TemplateView
-from flights.models import FlightOffer, FlightSegment
+from flights.models import FlightOffer, FlightSegment, Booking
 from django.urls import reverse
+from django.forms.models import model_to_dict
 from django.http import HttpResponseRedirect
+from dotenv import load_dotenv
+import os
+from .email_sender import FlightBookingEmailSender
+
+load_dotenv()
 
 # Create your views here.
 
@@ -22,8 +28,10 @@ class BookingView(TemplateView):
             context['offer'] = offer
             
             # Получаем сегменты рейса
-            segments = FlightSegment.objects.filter(offer=offer)
+            segments = FlightSegment.objects.filter(offer=offer, there_seg=True)
             context['segments'] = segments
+            context['return_segments'] = FlightSegment.objects.filter(offer=offer, there_seg=False)
+            print(FlightSegment.objects.filter(offer=offer, there_seg=False))
 
             #print(segments.first().dep_airport)
 
@@ -105,6 +113,8 @@ class BookingView(TemplateView):
                     'type': 'ADULT',
                     'firstName': form_data.get(f'adult_{i}_first_name', ''),
                     'lastName': form_data.get(f'adult_{i}_last_name', ''),
+                    'surname': form_data.get(f'adult_{i}_surname'),
+                    'dateOfBirth': form_data.get(f'adult_{i}_dob', ''),
                     'dateOfBirth': form_data.get(f'adult_{i}_dob', ''),
                     'gender': form_data.get(f'adult_{i}_gender', ''),
                     'documentType': form_data.get(f'adult_{i}_document_type', ''),
@@ -122,6 +132,8 @@ class BookingView(TemplateView):
                     'type': 'CHILD',
                     'firstName': form_data.get(f'child_{i}_first_name', ''),
                     'lastName': form_data.get(f'child_{i}_last_name', ''),
+                    'surname': form_data.get(f'child_{i}_surname'),
+                    'dateOfBirth': form_data.get(f'child_{i}_dob', ''),
                     'dateOfBirth': form_data.get(f'child_{i}_dob', ''),
                     'gender': form_data.get(f'child_{i}_gender', ''),
                     'documentNumber': form_data.get(f'child_{i}_document_number', '')
@@ -138,6 +150,8 @@ class BookingView(TemplateView):
                     'type': 'INFANT',
                     'firstName': form_data.get(f'infant_{i}_first_name', ''),
                     'lastName': form_data.get(f'infant_{i}_last_name', ''),
+                    'surname': form_data.get(f'infant_{i}_surname'),
+                    'dateOfBirth': form_data.get(f'infant_{i}_dob', ''),
                     'dateOfBirth': form_data.get(f'infant_{i}_dob', ''),
                     'gender': form_data.get(f'infant_{i}_gender', ''),
                     'documentNumber': form_data.get(f'infant_{i}_document_number', '')
@@ -199,11 +213,19 @@ class BookingSuccessView(TemplateView):
             
             # Добавляем информацию о бронировании в контекст
             context['booking'] = booking
+            
             context['offer'] = booking.offer
             
             # Получаем сегменты рейса
-            segments = FlightSegment.objects.filter(offer=booking.offer)
+            segments = FlightSegment.objects.filter(offer=booking.offer, there_seg=True)
             context['segments'] = segments
+            context['return_segments'] = FlightSegment.objects.filter(offer=booking.offer, there_seg=False)
+
+            context['dep_airport'] = segments.first().dep_airport
+            context['dep_iataCode'] = segments.first().dep_iataCode
+
+            context['arr_airport'] = segments.last().arr_airport
+            context['arr_iataCode'] = segments.last().arr_iataCode
             
             # Получаем данные о пассажирах
             context['passengers'] = booking.passenger_data.get('passengers', [])
@@ -216,4 +238,37 @@ class BookingSuccessView(TemplateView):
             context['error'] = f'Бронирование не найдено или произошла ошибка: {str(e)}'
             
         return context
+    
+    def get(self, request, *args, **kwargs):
+        booking_id = self.kwargs.get('booking_id')
+        booking = Booking.objects.get(id=booking_id)
+        booking_data = model_to_dict(booking)
+        f_segment = FlightSegment.objects.filter(offer=booking.offer, there_seg=True).first()
+        l_segment = FlightSegment.objects.filter(offer=booking.offer, there_seg=True).last()
+        booking_data['terminal'] = f_segment.dep_terminal
+        booking_data['departure_city'] = f_segment.dep_airport
+        booking_data['arrival_city'] = l_segment.arr_airport
+        booking_data['airline'] = f_segment.carrierCode
+        booking_data['flight_number'] = f_segment.aircraftCode
+        booking_data['departure_date'] = booking.offer.dep_duration
+        booking_data['arrival_date'] = booking.offer.arr_duration
+        if not(booking.offer.oneWay):
+            f_segment = FlightSegment.objects.filter(offer=booking.offer, there_seg=False).first()
+            l_segment = FlightSegment.objects.filter(offer=booking.offer, there_seg=False).last()
+            booking_data['r_departure_date'] = f_segment.dep_dateTime
+            booking_data['r_arrival_date'] = l_segment.arr_dateTime
+        print(booking_data)
+        if booking.status == 'PENDING':
+            email_sender = FlightBookingEmailSender()
+            email_sender.send_booking_confirmation(
+                sender_email=os.getenv('GMAIL'),
+                sender_password=os.getenv('GMAIL_PASSWORD'), 
+                recipient_email=booking.contact_email,
+                booking_data=booking_data
+            )
+            booking.status = 'CONFIRMED'
+            booking.save()
+        print('Hello world')
+        return super().get(request)
+
 
