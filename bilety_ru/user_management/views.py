@@ -7,6 +7,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
+from flights.models import Booking
 
 # Create your views here.
 
@@ -23,15 +24,20 @@ class SignUpView(CreateView):
             return super().get(request, *args, **kwargs)
 
     def form_valid(self, form):
-        response = super().form_valid(form)
         # Автоматически авторизуем пользователя после регистрации
-        username = form.cleaned_data.get('username')
+        username = form.cleaned_data.get('email')
         password = form.cleaned_data.get('password1')
         user = authenticate(self.request, username=username, password=password)
         if user is not None:
+            messages.error(self.request, 'Аккаунт с таким email уже существует.')
+            return super().form_invalid(form)
+            #return response#HttpResponseRedirect(reverse('user_management:signup'))
+        else:
+            user = User.objects.create_user(username=username, email=username, password=password)
+            user.save()
             login(self.request, user)
-            messages.success(self.request, f'Добро пожаловать, {user.first_name}! Вы успешно зарегистрированы.')
-        return response
+            messages.success(self.request, f'Добро пожаловать!')
+            return super().form_valid(form)
 
     def form_invalid(self, form):
         messages.error(self.request, 'Пожалуйста, исправьте ошибки в форме.')
@@ -42,25 +48,22 @@ class SignInView(FormView):
     template_name = 'user_management/auth.html'
     form_class = SignInForm
     success_url = reverse_lazy('flights:home')
-
+    
     def get(self, request, *args, **kwargs):
         if request.user.is_authenticated:
+            messages.info(request, 'Вы уже вошли в систему.')
             return redirect('flights:home')
         else:
             return super().get(request, *args, **kwargs)
-
+    
     def form_valid(self, form):
-        username = form.cleaned_data.get('username')
+        username = form.cleaned_data.get('email')
         password = form.cleaned_data.get('password')
         user = authenticate(self.request, username=username, password=password)
         if user is not None:
             login(self.request, user)
-            messages.success(self.request, f'Добро пожаловать, {user.first_name}!')
-            # Перенаправляем на страницу, с которой пользователь пришел, если есть
-            next_page = self.request.GET.get('next')
-            if next_page:
-                return redirect(next_page)
-            return redirect(self.success_url)
+            messages.success(self.request, f'Добро пожаловать!')
+            return super().form_valid(form)
         else:
             messages.error(self.request, 'Неверное имя пользователя или пароль.')
             return self.form_invalid(form)
@@ -79,22 +82,11 @@ class LogOutView(View):
 
 @login_required
 def profile(request):
-    """Страница профиля пользователя"""
-    from flights.models import FlightRequest
-    
-    # Получаем историю поисков пользователя
-    flight_requests = FlightRequest.objects.filter(user=request.user).order_by('-created_at')[:10]
-    
+    orders = Booking.objects.filter(user=request.user).order_by('-created_at')[:10]
+    print(orders)
     context = {
         'user': request.user,
-        'flight_requests': flight_requests
+        'orders': orders
     }
     
     return render(request, 'user_management/profile.html', context)
-
-
-def index(request):
-    """Главная страница управления пользователями"""
-    if request.user.is_authenticated:
-        return redirect('user_management:profile')
-    return redirect('user_management:signin')

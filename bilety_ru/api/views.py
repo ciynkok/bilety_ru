@@ -32,14 +32,11 @@ def get_cities(request):
 
 
 def offer_search_api(flight_req_id):
-    """
-    Функция для поиска предложений авиабилетов через API Amadeus
-    и сохранения их в базу данных
-    """
+    
     try:
         # Проверяем существование запроса
         flight_req = FlightRequest.objects.get(id=flight_req_id)
-        #print(flight_req)
+
         # Преобразуем модель в словарь для передачи в API
         kwargs = model_to_dict(flight_req)
         d = {}
@@ -49,13 +46,11 @@ def offer_search_api(flight_req_id):
         
         # Ограничиваем количество результатов
         d['max'] = 2
-        #d['travelClass'] = 'ECONOMY'
+        
         # Выполняем поиск рейсов
-        #print(1)
-        #print(d)
+
         search_flights = c.shopping.flight_offers_search.get(**d)
-        #print(2)
-        #print(search_flights.data)
+
         # Проверяем, есть ли результаты
         if not search_flights.data:
             print(f"No flights found for request ID: {flight_req_id}")
@@ -77,10 +72,9 @@ def offer_search_api(flight_req_id):
             except (ValueError, TypeError) as e:
                 print(f"Error parsing duration: {e}")
                 duration = datetime.time(0, 0)  # Устанавливаем значение по умолчанию
-            #print(flight['itineraries'][0]['duration'], duration)
+            
             # Создаем предложение рейса
-            #print(segment1['departure']['at'], type(segment1['departure']['at']))
-            #print(isodate.parse_date(segment1['departure']['at']), type(isodate.parse_date(segment1['departure']['at'])))
+            
             offer = FlightOffer(
                 flightRequest=flight_req,
                 adults_count=flight_req.adults,
@@ -89,7 +83,7 @@ def offer_search_api(flight_req_id):
                 duration=duration,
                 currencyCode=flight['price']['currency'],
                 totalPrice=flight['price']['total'],
-                oneWay=False if len(flight['itineraries']) > 1 else False,
+                oneWay=False if len(flight['itineraries']) > 1 else True,
                 data=flight,
             )
             # Проверяем наличие атрибутов children и infants у объекта flight_req
@@ -98,7 +92,7 @@ def offer_search_api(flight_req_id):
             if hasattr(flight_req, 'infants') and flight_req.infants is not None:
                 offer.infants_count = flight_req.infants
             offer.save()
-            #print(offer.duration)
+            
             
             # Обрабатываем каждый сегмент рейса
             for i in range(len(flight['itineraries'])):

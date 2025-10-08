@@ -1,6 +1,5 @@
 {% extends 'flights/base.html' %}
 {% load static %}
-{% load user_tags %}
 
 {% block title %}Вход в систему - Билеты.ру{% endblock %}
 
@@ -24,8 +23,8 @@
                     <form method="post">
                         {% csrf_token %}
                         <div class="form-group mb-3">
-                            <label for="id_username">Имя пользователя</label>
-                            {{ form.username|add_class:"form-control" }}
+                            <label for="id_username">Email</label>
+                            {{ form.email }}
                             {% if form.username.errors %}
                                 <div class="invalid-feedback d-block">
                                     {{ form.username.errors }}
@@ -35,7 +34,7 @@
                         
                         <div class="form-group mb-3">
                             <label for="id_password">Пароль</label>
-                            {{ form.password|add_class:"form-control" }}
+                            {{ form.password}}
                             {% if form.password.errors %}
                                 <div class="invalid-feedback d-block">
                                     {{ form.password.errors }}

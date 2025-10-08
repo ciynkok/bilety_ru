@@ -80,9 +80,9 @@ class OffersSearch(FormView):
         flight_request.save()
         self.request.session['id_offer_search'] = flight_request.id
         
-        # Запускаем поиск предложений через API
+
         search_success = offer_search_api(flight_request.id)
-        # Если запрос AJAX, возвращаем JSON-ответ
+        
         if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'success': search_success})
         
@@ -95,9 +95,7 @@ class OffersSearch(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        #context['iata'] = IATA.objects.first()
         # Получаем результаты последнего поиска
-        #context['data'] = FlightOffer.objects.first().data
         if 'id_offer_search' in self.request.session:
             try:
                 flight_req = FlightRequest.objects.filter(id=self.request.session['id_offer_search']).last()

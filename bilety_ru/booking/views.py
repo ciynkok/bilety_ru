@@ -31,7 +31,7 @@ class BookingView(TemplateView):
             segments = FlightSegment.objects.filter(offer=offer, there_seg=True)
             context['segments'] = segments
             context['return_segments'] = FlightSegment.objects.filter(offer=offer, there_seg=False)
-            print(FlightSegment.objects.filter(offer=offer, there_seg=False))
+            #print(FlightSegment.objects.filter(offer=offer, there_seg=False))
 
             #print(segments.first().dep_airport)
 
@@ -69,7 +69,6 @@ class BookingView(TemplateView):
     def post(self, request, *args, **kwargs):
         offer_id = self.kwargs.get('offer_id')
         actual_price = request.POST.get('actualPrice')
-        
         try:
             offer = FlightOffer.objects.get(id=offer_id)
             
@@ -124,7 +123,6 @@ class BookingView(TemplateView):
                     passenger['documentSeries'] = form_data.get(f'adult_{i}_document_series', '')
                     passenger['twoLetters'] = form_data.get(f'adult_{i}_two_letters', '')
                 passengers.append(passenger)
-            
             # Собираем данные о детях
             for i in range(1, children_count + 1):
                 passenger = {
@@ -136,13 +134,13 @@ class BookingView(TemplateView):
                     'dateOfBirth': form_data.get(f'child_{i}_dob', ''),
                     'dateOfBirth': form_data.get(f'child_{i}_dob', ''),
                     'gender': form_data.get(f'child_{i}_gender', ''),
+                    'documentType': form_data.get(f'child_{i}_document_type', ''),
                     'documentNumber': form_data.get(f'child_{i}_document_number', '')
                 }
                 if passenger['documentType'] == 'ID_CARD':
                     passenger['documentSeries'] = form_data.get(f'child_{i}_document_series', '')
                     passenger['twoLetters'] = form_data.get(f'child_{i}_two_letters', '')
                 passengers.append(passenger)
-            
             # Собираем данные о младенцах
             for i in range(1, infants_count + 1):
                 passenger = {
@@ -154,19 +152,18 @@ class BookingView(TemplateView):
                     'dateOfBirth': form_data.get(f'infant_{i}_dob', ''),
                     'dateOfBirth': form_data.get(f'infant_{i}_dob', ''),
                     'gender': form_data.get(f'infant_{i}_gender', ''),
+                    'documentType': form_data.get(f'infant_{i}_document_type', ''),
                     'documentNumber': form_data.get(f'infant_{i}_document_number', '')
                 }
                 if passenger['documentType'] == 'ID_CARD':
                     passenger['documentSeries'] = form_data.get(f'infant_{i}_document_series', '')
                     passenger['twoLetters'] = form_data.get(f'infant_{i}_two_letters', '')
                 passengers.append(passenger)
-            
             # Получаем контактные данные
             contact_email = form_data.get('contact_email', '')
             contact_phone = form_data.get('contact_phone', '')
             
             # Создаем запись о бронировании
-            from flights.models import Booking
             
             booking = Booking(
                 offer=offer,
@@ -176,7 +173,6 @@ class BookingView(TemplateView):
                 contact_email=contact_email,
                 contact_phone=contact_phone
             )
-            
             # Если пользователь авторизован, связываем бронирование с ним
             if request.user.is_authenticated:
                 booking.user = request.user
@@ -191,10 +187,12 @@ class BookingView(TemplateView):
             return HttpResponseRedirect(reverse('booking:booking_success', kwargs={'booking_id': booking.id}))
             
         except FlightOffer.DoesNotExist:
+            print('Offer not found')
             context = self.get_context_data(**kwargs)
             context['error'] = 'Предложение не найдено'
             return self.render_to_response(context)
         except Exception as e:
+            print(f'Error processing booking: {str(e)}')
             context = self.get_context_data(**kwargs)
             context['error'] = f'Ошибка при обработке бронирования: {str(e)}'
             return self.render_to_response(context)
@@ -208,7 +206,6 @@ class BookingSuccessView(TemplateView):
         booking_id = self.kwargs.get('booking_id')
         
         try:
-            from flights.models import Booking
             booking = Booking.objects.get(id=booking_id)
             
             # Добавляем информацию о бронировании в контекст
@@ -257,7 +254,6 @@ class BookingSuccessView(TemplateView):
             l_segment = FlightSegment.objects.filter(offer=booking.offer, there_seg=False).last()
             booking_data['r_departure_date'] = f_segment.dep_dateTime
             booking_data['r_arrival_date'] = l_segment.arr_dateTime
-        print(booking_data)
         if booking.status == 'PENDING':
             email_sender = FlightBookingEmailSender()
             email_sender.send_booking_confirmation(
@@ -268,7 +264,45 @@ class BookingSuccessView(TemplateView):
             )
             booking.status = 'CONFIRMED'
             booking.save()
-        print('Hello world')
         return super().get(request)
+    
+
+class BookingDataView(TemplateView):
+    template_name = 'booking/booking_data.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        booking_id = self.kwargs.get('booking_id')
+        
+        try:
+            booking = Booking.objects.get(id=booking_id)
+            
+            # Добавляем информацию о бронировании в контекст
+            context['booking'] = booking
+            
+            context['offer'] = booking.offer
+            
+            # Получаем сегменты рейса
+            segments = FlightSegment.objects.filter(offer=booking.offer, there_seg=True)
+            context['segments'] = segments
+            context['return_segments'] = FlightSegment.objects.filter(offer=booking.offer, there_seg=False)
+
+            context['dep_airport'] = segments.first().dep_airport
+            context['dep_iataCode'] = segments.first().dep_iataCode
+
+            context['arr_airport'] = segments.last().arr_airport
+            context['arr_iataCode'] = segments.last().arr_iataCode
+            
+            # Получаем данные о пассажирах
+            context['passengers'] = booking.passenger_data.get('passengers', [])
+            
+            # Если пользователь авторизован, проверяем, что бронирование принадлежит ему
+            if self.request.user.is_authenticated and booking.user and booking.user != self.request.user:
+                context['error'] = 'У вас нет доступа к этому бронированию'
+                
+        except Exception as e:
+            context['error'] = f'Бронирование не найдено или произошла ошибка: {str(e)}'
+            
+        return context
 
 

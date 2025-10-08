@@ -1,6 +1,5 @@
-{% extends 'flights/base.html' %}
+<!--{% extends 'flights/base.html' %}-->
 {% load static %}
-{% load user_tags %}
 
 {% block title %}Профиль - Билеты.ру{% endblock %}
 
@@ -8,7 +7,7 @@
 <div class="container mt-5 mb-5">
     <div class="row">
         <!-- Информация о пользователе -->
-        <div class="col-md-4">
+        <!--<div class="col-md-4">
             <div class="card shadow mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">Информация о пользователе</h5>
@@ -38,43 +37,32 @@
                 </div>
             </div>
         </div>
-        
+    -->
         <!-- История поисков и бронирований -->
-        <div class="col-md-8">
-            <div class="card shadow mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">История поисков</h5>
-                </div>
-                <div class="card-body">
-                    {% if flight_requests %}
-                        <div class="list-group">
-                            {% for request in flight_requests %}
-                                <a href="{% url 'flights:search_results' request.id %}" class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h5 class="mb-1">{{ request.originLocationCode }} → {{ request.destinationLocationCode }}</h5>
-                                        <small>{{ request.created_at|date:"d.m.Y H:i" }}</small>
-                                    </div>
-                                    <p class="mb-1">Дата: {{ request.departureDate }}</p>
-                                    <small>Пассажиры: {{ request.adults }} взр.{% if request.children %}, {{ request.children }} дет.{% endif %}</small>
-                                </a>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="alert alert-info">
-                            У вас пока нет истории поисков. <a href="{% url 'flights:home' %}" class="alert-link">Найти рейс</a>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-            
+        <div class="col-md-8">   
             <div class="card shadow">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Мои бронирования</h5>
+                    <h5 class="mb-0">Бронирования</h5>
                 </div>
                 <div class="card-body">
-                    <div class="alert alert-info">
-                        Функционал бронирований находится в разработке.
+                    {% if orders %}
+                    <div class="list-group">
+                        {% for o in orders %}
+                        <a href="{% url 'booking:booking_data' o.id %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ o.offer.flightRequest.originLocationCode }} → {{ o.offer.flightRequest.destinationLocationCode }}</h5>
+                                <small>{{ o.created_at|date }}</small>
+                            </div>
+                            <p class="mb-1">Дата вылета: {{ o.offer.dep_duration }}</p>
+                            <p class="mb-1">Статус: {% if o.status == 'PENDING' %} Ожидает подтверждения {% else %} Подтверждено {% endif %}</p>
+                        </a>
+                        {% endfor %}
                     </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            У вас пока нет бронирований. <a href="{% url 'flights:home' %}" class="alert-link">Найти рейс</a>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
