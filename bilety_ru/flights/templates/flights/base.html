@@ -40,6 +40,11 @@
                 </ul>-->
                 
                 <div class="ml-auto">
+                    {% if user.is_staff %}
+                        <a href="{% url 'admin:index' %}" class="btn btn-warning mr-2" target="_blank">
+                            <i class="fas fa-tools mr-1"></i>Админ-панель
+                        </a>
+                    {% endif %}
                     {% if user.is_authenticated %}
                         <!-- Аватар с выпадающим меню для авторизованных пользователей -->
                         <div class="dropdown avatar-dropdown">

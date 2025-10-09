@@ -21,3 +21,7 @@ class SignInForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ('email', 'password')
+        widgets = {
+            'password': forms.PasswordInput(),
+            'email': forms.EmailInput(attrs={'autofocus': True}),
+        }
