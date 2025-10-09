@@ -1,0 +1,329 @@
+{% extends 'flights/base.html' %}
+{% load static %}
+
+{% block title %}Оформление билета - Билеты.ру{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'booking/css/booking.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="booking-container">
+    <h2 class="mb-4">Оформление билета</h2>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Загрузка...</span>
+            </div>
+            <p class="mt-2">Проверяем актуальность цены...</p>
+        </div>
+    </div>
+    
+    <div class="flight-details" id="flightDetails">
+         <div class="row">
+            <div class="col-md-8">
+                <h4>Детали рейса</h4>
+                <div class="flight-route">
+                    <span class="h5">{{ dep_airport }} ({{ dep_iataCode }})</span>
+                    <span class="flight-arrow">→</span>
+                    <span class="h5">{{ arr_airport }} ({{ arr_iataCode }})</span>
+                </div>
+                <div class="flight-duration">
+                    <small>Общее время в пути: {{ offer.duration|time:"H:i" }}</small>
+                </div>
+            </div>
+            <div class="col-md-4 text-right">
+                <div class="price-info">
+                    <div class="price-alert alert alert-info d-none" id="priceAlert">
+                        <p>Цена изменилась!</p>
+                        <p>Старая цена: <span id="originalPrice"></span></p>
+                        <p>Разница: <span id="priceDifference"></span></p>
+                        <button type="button" class="btn btn-sm btn-primary" id="acceptNewPrice">Продолжить с новой ценой</button>
+                    </div>
+                    <div class="flight-price">
+                        <span id="totalPrice">{{ offer.totalPrice }} {{ offer.currencyCode }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <div class="segments-container">
+            {% for s in segments %}
+            <div class="flight-segment">
+                <div class="row">
+                    <div class="col-md-1">
+                        <div class="airline-logo">
+                            <img src="https://pics.avs.io/80/40/{{ s.carrierCode }}.png" alt="{{ segment.carrierCode }}" class="img-fluid">
+                        </div>
+                    </div>
+                    <div class="col-md-11">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="departure-info">
+                                    <div class="time">{{ s.dep_dateTime }}</div>
+                                    <div class="airport">{{ s.dep_airport }} ({{ s.dep_iataCode }})</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <div class="flight-duration">
+                                    <div class="duration">{{ s.duration }}</div>
+                                    <div class="flight-line">&#8212;&#8212;&#8212;&#9992;&#8212;&#8212;&#8212;</div>
+                                    <div class="flight-number">{{ s.carrierCode }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="arrival-info">
+                                    <div class="time">{{ s.arr_dateTime }}</div>
+                                    <div class="airport">{{ s.arr_airport }} ({{ s.arr_iataCode }})</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {{ return_segements }}
+            {% if return_segments %}
+            <p>Маршрут обратно:</p>
+            {% for s in return_segments %}
+            <div class="flight-segment">
+                <div class="row">
+                    <div class="col-md-1">
+                        <div class="airline-logo">
+                            <img src="https://pics.avs.io/80/40/{{ s.carrierCode }}.png" alt="{{ segment.carrierCode }}" class="img-fluid">
+                        </div>
+                    </div>
+                    <div class="col-md-11">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="departure-info">
+                                    <div class="time">{{ s.dep_dateTime }}</div>
+                                    <div class="airport">{{ s.dep_airport }} ({{ s.dep_iataCode }})</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <div class="flight-duration">
+                                    <div class="duration">{{ s.duration }}</div>
+                                    <div class="flight-line">&#8212;&#8212;&#8212;&#9992;&#8212;&#8212;&#8212;</div>
+                                    <div class="flight-number">{{ s.carrierCode }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="arrival-info">
+                                    <div class="time">{{ s.arr_dateTime }}</div>
+                                    <div class="airport">{{ s.arr_airport }} ({{ s.arr_iataCode }})</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+        <!--<div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Загрузка...</span>
+            </div>
+        </div>-->
+    </div>
+    
+    <form method="post" action="{% url 'booking:booking_index' offer.id %}" id="bookingForm">
+        {% csrf_token %}
+        <input type="hidden" name="actualPrice" id="actualPrice" value="{{ offer.total_price }}">
+        
+        <div class="form-section">
+            <h4 class="section-title">Информация о пассажирах</h4>
+            
+            <!-- Скрытые поля для хранения количества пассажиров -->
+            <input type="hidden" id="adults_count" name="adults_count" value="{{ adults }}">
+            <input type="hidden" id="children_count" name="children_count" value="{{ children }}">
+            <input type="hidden" id="infants_count" name="infants_count" value="{{ infants }}">
+            
+            <div id="passengersContainer">
+                <!-- Формы для взрослых пассажиров -->
+                {% if adults > 0 %}
+                <div class="passenger-type-header">
+                    <h5>Взрослые пассажиры (от 12 лет)</h5>
+                </div>
+                {% for i in adults_range %}
+                <div class="passenger-info card mb-3">
+                    <div class="card-header">
+                        Взрослый пассажир {{ i }}
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 form-group">
+                                <label for="adult_{{ i }}_first_name">Имя</label>
+                                <input type="text" class="form-control" id="adult_{{ i }}_first_name" name="adult_{{ i }}_first_name" required>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="adult_{{ i }}_last_name">Фамилия</label>
+                                <input type="text" class="form-control" id="adult_{{ i }}_last_name" name="adult_{{ i }}_last_name" required>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="adult_{{ i }}_surname">Отчество</label>
+                                <input type="text" class="form-control" id="adult_{{ i }}_surname" name="adult_{{ i }}_surname" required>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="adult_{{ i }}_dob">Дата рождения</label>
+                                <input type="date" class="form-control" id="adult_{{ i }}_dob" name="adult_{{ i }}_dob" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 form-group">
+                                <label for="adult_{{ i }}_gender">Пол</label>
+                                <select class="form-control" id="adult_{{ i }}_gender" name="adult_{{ i }}_gender" required>
+                                    <option value="">Выберите</option>
+                                    <option value="MALE">Мужской</option>
+                                    <option value="FEMALE">Женский</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="adult_{{ i }}_document_type">Тип документа</label>
+                                <select class="form-control" id="adult_{{ i }}_document_type" name="adult_{{ i }}_document_type" required>
+                                    <option value="">Выберите</option>
+                                    <option value="PASSPORT">Паспорт</option>
+                                    <option value="ID_CARD">Свидетельство о рождения</option>
+                                </select>
+                            </div>
+                            <script>
+                                document.getElementById('adult_{{ i }}_document_type').value = 'PASSPORT';
+                            </script>
+                            <div id="adult_{{ i }}_document_data"></div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+                
+                <!-- Формы для детей -->
+                {% if children > 0 %}
+                <div class="passenger-type-header">
+                    <h5>Дети (от 2 до 12 лет)</h5>
+                </div>
+                {% for i in children_range %}
+                <div class="passenger-info card mb-3">
+                    <div class="card-header">
+                        Ребенок {{ i }}
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 form-group">
+                                <label for="child_{{ i }}_first_name">Имя</label>
+                                <input type="text" class="form-control" id="child_{{ i }}_first_name" name="child_{{ i }}_first_name" required>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="child_{{ i }}_last_name">Фамилия</label>
+                                <input type="text" class="form-control" id="child_{{ i }}_last_name" name="child_{{ i }}_last_name" required>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="child_{{ i }}_surname">Отчество</label>
+                                <input type="text" class="form-control" id="child_{{ i }}_surname" name="child_{{ i }}_surname" required>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="child_{{ i }}_dob">Дата рождения</label>
+                                <input type="date" class="form-control" id="child_{{ i }}_dob" name="child_{{ i }}_dob" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 form-group">
+                                <label for="child_{{ i }}_gender">Пол</label>
+                                <select class="form-control" id="child_{{ i }}_gender" name="child_{{ i }}_gender" required>
+                                    <option value="">Выберите</option>
+                                    <option value="MALE">Мужской</option>
+                                    <option value="FEMALE">Женский</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="child_{{ i }}_document_type">Тип документа</label>
+                                <select class="form-control" id="child_{{ i }}_document_type" name="child_{{ i }}_document_type" required>
+                                    <option value="">Выберите</option>
+                                    <option value="ID_CARD">Свидетельство о рождения</option>
+                                </select>
+                            </div>
+                            <script>
+                                document.getElementById('child_{{ i }}_document_type').value = 'ID_CARD';
+                            </script>
+                            <div id="child_{{ i }}_document_data"></div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+                
+                <!-- Формы для младенцев -->
+                {% if infants > 0 %}
+                <div class="passenger-type-header">
+                    <h5>Младенцы (до 2 лет)</h5>
+                </div>
+                {% for i in infants_range %}
+                <div class="passenger-info card mb-3">
+                    <div class="card-header">
+                        Младенец {{ i }}
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 form-group">
+                                <label for="infant_{{ i }}_first_name">Имя</label>
+                                <input type="text" class="form-control" id="infant_{{ i }}_first_name" name="infant_{{ i }}_first_name" required>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="infant_{{ i }}_last_name">Фамилия</label>
+                                <input type="text" class="form-control" id="infant_{{ i }}_last_name" name="infant_{{ i }}_last_name" required>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="infant_{{ i }}_surname">Отчество</label>
+                                <input type="text" class="form-control" id="infant_{{ i }}_surname" name="infant_{{ i }}_surname" required>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="infant_{{ i }}_dob">Дата рождения</label>
+                                <input type="date" class="form-control" id="infant_{{ i }}_dob" name="infant_{{ i }}_dob" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 form-group">
+                                <label for="infant_{{ i }}_gender">Пол</label>
+                                <select class="form-control" id="infant_{{ i }}_gender" name="infant_{{ i }}_gender" required>
+                                    <option value="">Выберите</option>
+                                    <option value="MALE">Мужской</option>
+                                    <option value="FEMALE">Женский</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="infant_{{ i }}_document_type">Тип документа</label>
+                                <select class="form-control" id="infant_{{ i }}_document_type" name="infant_{{ i }}_document_type" required>
+                                    <option value="">Выберите</option>
+                                    <option value="ID_CARD">Свидетельство о рождения</option>
+                                </select>
+                            </div>
+                            <script>
+                                document.getElementById('infant_{{ i }}_document_type').value = 'ID_CARD';
+                            </script>
+                            <div id="infant_{{ i }}_document_data"></div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+        <div class="form-section">
+            <h4 class="section-title">Контактная информация</h4>
+            <div class="row">
+                <div class="col-md-6 form-group">
+                    <label for="contact_email">Email</label>
+                    <input type="email" class="form-control" id="contact_email" name="contact_email" required>
+                </div>
+                <div class="col-md-6 form-group">
+                    <label for="contact_phone">Телефон</label>
+                    <input type="tel" class="form-control" id="contact_phone" name="contact_phone" required>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">Оформить билет</button>
+        </div>
+    </form>
+</div>
+<script src="{% static 'booking/js/booking.js' %}"></script>
+{% endblock %}
