@@ -43,6 +43,12 @@ INSTALLED_APPS = [
     'api',
     'booking',
     'django_apscheduler',
+    #'django_otp',                                  # Основное приложение для работы с OTP
+    #'django_otp.plugins.otp_static',               # Поддержка статических кодов
+    #'django_otp.plugins.otp_totp',                 # Поддержка TOTP (Time-based One-Time Password)
+    #'two_factor',                                  # Приложение двухфакторной аутентификации
+    #'crispy_forms',                                # Для красивых форм
+    #'crispy_bootstrap5',    
 ]
 
 MIDDLEWARE = [
@@ -53,6 +59,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django_otp.middleware.OTPMiddleware',
 ]
 
 ROOT_URLCONF = 'bilety_ru.urls'
@@ -115,6 +126,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTH_USER_MODEL = "user_management"
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
@@ -137,3 +150,19 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+'''
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.mail.ru'
+EMAIL_PORT = 587  # или 465 для SSL
+EMAIL_USE_TLS = True  # или EMAIL_USE_SSL = True, если используете SSL
+EMAIL_HOST_USER = os.getenv('EMAIL')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASSWORD')
+DEFAULT_FROM_EMAIL = f'bilety_ru {os.getenv('GMAIL')}'
+
+TWO_FACTOR_EMAIL_GATEWAY = 'two_factor.gateways.email.EmailDevice'
+'''

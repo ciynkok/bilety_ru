@@ -17,6 +17,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from booking import views as booking_views
+from two_factor.urls import urlpatterns as tf_urls
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -24,5 +26,5 @@ urlpatterns = [
     path('api/', include('api.urls', namespace='api')),
     path('', include('flights.urls', namespace='flights')),
     path('booking/', include('booking.urls', namespace='booking')),
-    #path('booking/<int:offer_id>/', booking_views.BookingView.as_view(), name='booking_index'),
+    #path('tf_auth/', include(tf_urls))
 ]

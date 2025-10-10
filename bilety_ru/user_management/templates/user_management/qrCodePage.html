@@ -1,0 +1,28 @@
+{% extends 'flights/base.html' %}
+{% load static %}
+
+{% block title %}Вход в систему - Билеты.ру{% endblock %}
+
+{% block content %}
+<div class="card mx-auto">
+    <div class="card-body text-center">
+        <h3>{{ request.user.email }}</h3>
+        {% if not request.user.mfa_enabled %}
+        <div>
+            <img src="{{ qrcode }}" alt="{{ img_path }}">
+
+            <form method="POST" action="{% url ''%}" class="form text-center">
+                {% csrf_token %}
+                <div class="form-group text-">
+                    <div class="mx-auto" style="width: 30%;">
+                        <input type="text" id="otp_code" name="otp_code" maxlength="6" required
+                        class="form-control" placeholder="Введите свой код">
+                    </div>
+                </div>
+                <input type="hidden" name="user_id" value="{{ request.user.id }}">
+                <button class="btn btn-primary" type="submit">Отправить</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
