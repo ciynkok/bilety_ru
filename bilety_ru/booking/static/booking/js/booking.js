@@ -125,10 +125,10 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log(2);
     // Запускаем первую проверку цены с задержкой в 3 секунды,
     // чтобы сначала загрузилась информация о рейсе
-    //setTimeout(checkCurrentPrice(offerId), 3000);
+    setTimeout(checkCurrentPrice(offerId), 3000);
 
     // Устанавливаем интервал для периодической проверки
-    //priceCheckTimer = setInterval(checkCurrentPrice, priceCheckInterval);
+    priceCheckTimer = setInterval(checkCurrentPrice, priceCheckInterval);
     
     // Валидация формы перед отправкой
     /*
@@ -180,21 +180,20 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             // Показываем загрузчик при отправке формы
             document.getElementById('loadingOverlay').style.display = 'flex';
-        }
-    });
+        }*/
     
     // Очищаем интервал при уходе со страницы
     window.addEventListener('beforeunload', function() {
         clearInterval(priceCheckTimer);
     });
-    
+    /*
     // Обработчики для полей формы (удаление класса is-invalid при вводе)
     document.querySelectorAll('input, select').forEach(element => {
         element.addEventListener('input', function() {
             this.classList.remove('is-invalid');
         });
     });
-    
+    */
     // Обработчик для кнопки "Продолжить с новой ценой"
     /*
     document.getElementById('acceptNewPrice').addEventListener('click', function() {

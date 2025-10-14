@@ -1,5 +1,5 @@
 from django.urls import path, include
-from .views import OffersSearch
+from .views import OffersSearch, index
 from api.views import get_cities
 
 app_name = 'flights'

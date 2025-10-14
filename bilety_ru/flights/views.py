@@ -2,6 +2,8 @@ from django.shortcuts import render, get_object_or_404
 from .forms import OfferSearchForm
 from django.shortcuts import render, redirect, HttpResponseRedirect, reverse, HttpResponse
 from .models import FlightOffer, FlightRequest, FlightSegment
+from user_management.models import CustomUser as User
+from django.contrib.auth.models import Group
 from api.models import IATA
 from django.views.generic.edit import CreateView, View, FormView
 from django.views.generic import TemplateView
@@ -11,18 +13,21 @@ from django.http import JsonResponse
 import datetime
 import json
 from api.views import get_cities, offer_search_api, create_flight_order
+import pandas as pd
 
-'''
+
 def index(request):
-    data = pd.read_csv('uploads/airports.csv')
+    data = pd.read_csv('airports.csv')
     print(data.keys())
+    #print(IATA.objects.get(id=100).iata)
     #IATA.objects.all().delete()
     #iata = IATA.objects.get(city='The Bronx') 
     #IATA.objects.filter(id__lt=9804).delete()
     #for i in range(0, len(data)):
         #IATA(id=i + 1 ,iata=data['IATA'][i], name=data['Airport name'][i], city=data['City'][i], state=data['Country'][i]).save()
     return render(request, 'flights/search.html')
-'''
+
+    
 
 class OffersSearch(FormView):
     template_name = 'flights/search.html'
@@ -95,6 +100,12 @@ class OffersSearch(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        #user = User.objects.get(email='porovozov.987654321@mail.ru')
+        #group = Group.objects.get(id=1)
+        
+        #user.save()
+        #print(user.groups.all())
         # Получаем результаты последнего поиска
         if 'id_offer_search' in self.request.session:
             try:

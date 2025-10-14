@@ -8,6 +8,6 @@ urlpatterns = [
     path('signin/', SignInView.as_view(), name='signin'),
     path('logout/', LogOutView.as_view(), name='logout'),
     path('profile/', profile, name='profile'),
-    path('qrCode/', qrCodePage, name='qrCodePage'),
-    path('verify_mfa/', verify_mfa, name='verify_mfa')
+    path('qrCodePage/', qrCodePage, name='qrCodePage'),
+    path('verify_mfa/<int:user_id>', verify_mfa, name='verify_mfa')
 ]

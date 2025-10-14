@@ -24,7 +24,7 @@
                         {% csrf_token %}
                         <div class="form-group mb-3">
                             <label for="id_username">Email</label>
-                            {{ form.email }}
+                            {{ form.username }}
                             {% if form.username.errors %}
                                 <div class="invalid-feedback d-block">
                                     {{ form.username.errors }}
@@ -34,7 +34,7 @@
                         
                         <div class="form-group mb-3">
                             <label for="id_password">Пароль</label>
-                            {{ form.password}}
+                            {{ form.password }}
                             {% if form.password.errors %}
                                 <div class="invalid-feedback d-block">
                                     {{ form.password.errors }}

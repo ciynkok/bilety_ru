@@ -17,7 +17,6 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from booking import views as booking_views
-from two_factor.urls import urlpatterns as tf_urls
 
 
 urlpatterns = [

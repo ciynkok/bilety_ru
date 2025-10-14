@@ -9,20 +9,9 @@
         <h3>{{ request.user.email }}</h3>
         {% if not request.user.mfa_enabled %}
         <div>
-            <img src="{{ qrcode }}" alt="{{ img_path }}">
-
-            <form method="POST" action="{% url ''%}" class="form text-center">
-                {% csrf_token %}
-                <div class="form-group text-">
-                    <div class="mx-auto" style="width: 30%;">
-                        <input type="text" id="otp_code" name="otp_code" maxlength="6" required
-                        class="form-control" placeholder="Введите свой код">
-                    </div>
-                </div>
-                <input type="hidden" name="user_id" value="{{ request.user.id }}">
-                <button class="btn btn-primary" type="submit">Отправить</button>
-            </form>
+            <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code" width="300" height="300">
         </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
