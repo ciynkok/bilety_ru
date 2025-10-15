@@ -40,6 +40,7 @@ class SignUpView(CreateView):
         if form.is_valid():
             user = form
             user.save()
+            user = authenticate(self.request, username=form.cleaned_data.get('email'), password=form.cleaned_data.get('password1'))
             login(self.request, user)
             return super().form_valid(form)
         else:

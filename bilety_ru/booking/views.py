@@ -161,7 +161,7 @@ class BookingView(TemplateView):
                 passengers.append(passenger)
             # Получаем контактные данные
             contact_email = form_data.get('contact_email', '')
-            contact_phone = form_data.get('contact_phone', '')
+            contact_phone = 89000000000#form_data.get('contact_phone', '')
             
             # Создаем запись о бронировании
             

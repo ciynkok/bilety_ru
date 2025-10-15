@@ -42,9 +42,9 @@ class OfferSearchForm(forms.ModelForm):
             'returnDate': 'Дата возвращения',
             'maxPrice': 'Максимальная цена',
             'nonStop': 'В первую очередь без пересадок',
-            'adults': 'Взрослые',
+            'adults': 'Взрослые от 12',
             'children': 'Дети до 12',
-            'infants': 'Младенцы',
+            'infants': 'Младенцы до 2',
             'sortParam': 'Сортировать по'
         }
         widgets = {
