@@ -87,4 +87,13 @@ class Booking(models.Model):
     
     def __str__(self):
         return f"Бронирование #{self.id} - {self.status}"
+    
+
+class AirLineRaiting(models.Model):
+    airline_code = models.CharField(max_length=10, blank=True, null=True)
+    airline_name = models.CharField(max_length=100)
+    rating = models.FloatField()
+
+    def __str__(self):
+        return f"{self.airline_name} ({self.airline_code}) - Рейтинг: {self.rating}"
 

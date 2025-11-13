@@ -112,7 +112,7 @@ class Command(BaseCommand):
                 total_loss += loss.item()
                 pbar.set_postfix(loss=total_loss / len(loader))
 
-            self.stdout.write(f"✅ Эпоха {epoch} завершена, средний loss = {total_loss/len(loader):.4f}")
+            self.stdout.write(f"Эпоха {epoch} завершена, средний loss = {total_loss/len(loader):.4f}")
 
         torch.save(model.state_dict(), out_path)
         self.stdout.write(self.style.SUCCESS(f"💾 Модель сохранена в {out_path}"))

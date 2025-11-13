@@ -8,6 +8,7 @@
 {% endblock %}
 
 {% block content %}
+<input type="hidden" name="id_user" id="id_user" value="{{ user.id }}">
 <div class="row">
     {{ data }}
     <div>
@@ -128,6 +129,7 @@
                                 <div>{{segment.dep_airport}}</div>
                                 <div>{{segment.arr_airport}}</div>
                             </div>
+                            
                         </div>
                     </div>
                 </p>

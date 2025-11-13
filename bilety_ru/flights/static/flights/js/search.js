@@ -176,6 +176,51 @@ document.addEventListener('DOMContentLoaded', function() {
     const destinationInput = document.getElementById('id_destinationLocationCode');
     const originList = document.getElementById('originList');
     const destinationList = document.getElementById('destinationList');
+    let id_user = document.getElementById('id_user').value;
+    var recommendetions = {};
+
+    $.ajax({
+        url: `/recommendations/${id_user}`,
+        type: 'GET',
+        dataType: 'json',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    }).done(function(data) {
+        console.log(data);
+        if (!data) {
+                //console.error('Error:', data.error);
+                console.log('error');
+                return;
+            }
+        recommendetions = data;
+    }).fail(function() {
+        console.log('error in ajax');
+    })
+
+    function getRecommendetions(resultsList) {
+        /*
+        const loadingItem = document.createElement('div');
+        loadingItem.textContent = 'Поиск аэропортов...';
+        loadingItem.className = 'loading-item';
+        resultsList.innerHTML = '';
+        resultsList.appendChild(loadingItem);
+        */
+        if (recommendetions) {
+            recommendetions.data.forEach(airport => {
+                const item = document.createElement('div');
+                item.className = 'airport-item';
+                const cityInfo = airport.cityName ? `${airport.cityName}, ` : '';
+                item.innerHTML = `<strong>${airport.iataCode}</strong> - ${cityInfo}`;
+                
+                item.addEventListener('click', function() {
+                    destinationInput.value = airport.iataCode;
+                    resultsList.innerHTML = '';
+                });
+                resultsList.appendChild(item);
+            })
+        }
+    }
     
     // Функция для поиска аэропортов
     function searchAirports(query, resultsList) {
@@ -254,6 +299,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     if (destinationInput) {
+        destinationInput.addEventListener('click', function() {
+            getRecommendetions(destinationList);
+        })
         destinationInput.addEventListener('input', function() {
             searchAirports(this.value, destinationList);
         });

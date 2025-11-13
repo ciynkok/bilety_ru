@@ -135,132 +135,8 @@ def offer_search_api(flight_req_id):
     except Exception as e:
         print(f"Error in offer_search_api: {e}")
         return False
-    
-'''
-class Index(APIView):
-    def get(self, request):
-        origin = request.GET.get('origin', '')
-        destination = request.GET.get('destination', '')
-        search_params = {
-                'origin': origin,
-                'destination': destination,
-                #'adults': 1,
-                #'nonStop': 'false',
-                #'currencyCode': 'RUB',
-                #'max': 5  # Количество результатов
-            }
-        
-        token_url = "https://test.api.amadeus.com/v1/security/oauth2/token"
-        token_data = {
-            'grant_type': 'client_credentials',
-            'client_id': os.getenv('API_KEY'),
-            'client_secret': os.getenv('API_SECRET')
-        }
-        
-        token_response = requests.post(token_url, data=token_data)
-        
-        if token_response.status_code != 200:
-            return JsonResponse({'error': 'Failed to get API token'}, status=500)
-            
-        access_token = token_response.json()['access_token']
 
-        # Формируем запрос к Flight Offers Search API
-        headers = {
-            'Authorization': f'Bearer {access_token}',
-            'Content-Type': 'application/json'
-        }
-        search_url = 'https://test.api.amadeus.com/v1/shopping/flight-dates'
-        print(1)
-        data = requests.get(search_url, headers=headers, params=search_params)
-        print(data)
-        return JsonResponse({'origin': origin, 'destination': destination, 'data': ''})
-
-
-def get_flight_prices(request):
-    """
-    Вьюха для получения цен на перелеты
-    Ожидает POST запрос с параметрами:
-    - origin: код города вылета (например, 'MOW')
-    - destination: код города прилета (например, 'LED')
-    - departure_date: дата вылета в формате 'YYYY-MM-DD' (опционально)
-    - return_date: дата возвращения в формате 'YYYY-MM-DD' (опционально)
-    """
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            origin = data.get('origin')
-            destination = data.get('destination')
-            departure_date = data.get('departure_date')
-            return_date = data.get('return_date')
-
-            # Валидация обязательных полей
-            if not origin or not destination:
-                return JsonResponse({'error': 'Origin and destination are required'}, status=400)
-
-            # Получаем токен Amadeus API
-            
-            token_url = "https://test.api.amadeus.com/v1/security/oauth2/token"
-            token_data = {
-                'grant_type': 'client_credentials',
-                'client_id': os.getenv('API_KEY'),
-                'client_secret': os.getenv('API_SECRET')
-            }
-            
-            token_response = requests.post(token_url, data=token_data)
-            
-            if token_response.status_code != 200:
-                return JsonResponse({'error': 'Failed to get API token'}, status=500)
-                
-            access_token = token_response.json()['access_token']
-
-            # Формируем запрос к Flight Offers Search API
-            headers = {
-                'Authorization': f'Bearer {access_token}',
-                'Content-Type': 'application/json'
-            }
-            
-            # Базовые параметры поиска
-            search_params = {
-                'originLocationCode': origin,
-                'destinationLocationCode': destination,
-                'adults': 1,
-                'nonStop': 'false',
-                'currencyCode': 'RUB',
-                'max': 50  # Количество результатов
-            }
-            
-            # Добавляем даты если они есть
-            if departure_date:
-                search_params['departureDate'] = departure_date
-            if return_date:
-                search_params['returnDate'] = return_date
-
-            # Если нет конкретных дат, ищем самые дешевые за ближайший месяц
-
-            if not departure_date and not return_date:
-                tomorrow = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
-                next_month = (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d')
-                search_params['departureDate'] = f"{tomorrow},{next_month}"
-            search_url = "https://test.api.amadeus.com/v2/shopping/flight-offers"
-            response = requests.get(search_url, headers=headers, params=search_params)
-
-            response = c.shopping.flight_dates.get(origin=origin, destination=destination)
-            print(response)
-            if response.status_code == 200:
-                flight_data = response.json()
-                processed_data = process_flight_data(flight_data)
-                return JsonResponse(processed_data, safe=False)
-            else:
-                return JsonResponse({'error': 'API request failed'}, status=response.status_code)
-
-        except json.JSONDecodeError:
-            return JsonResponse({'error': 'Invalid JSON'}, status=400)
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
-    
-    return JsonResponse({'error': 'Only POST method allowed'}, status=405)
-'''
-
+'''   
 def process_flight_data(flight_data):
     """
     Обрабатывает сырые данные от API и извлекает нужную информацию
@@ -300,7 +176,7 @@ def process_flight_data(flight_data):
         })
     
     return processed_flights
-
+'''
 
 def transform_airport(airport):
     airport = list(airport)

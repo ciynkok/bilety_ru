@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from .forms import OfferSearchForm
 from django.shortcuts import render, redirect, HttpResponseRedirect, reverse, HttpResponse
-from .models import FlightOffer, FlightRequest, FlightSegment
+from .models import FlightOffer, FlightRequest, FlightSegment, AirLineRaiting
 from user_management.models import CustomUser as User
 from django.contrib.auth.models import Group
 from api.models import IATA
@@ -17,8 +17,14 @@ import pandas as pd
 
 
 def index(request):
-    data = pd.read_csv('airports.csv')
-    print(data.keys())
+    data = pd.read_csv('Airline_review.csv')
+
+    data['Overall_Rating'] = pd.to_numeric(data['Overall_Rating'], errors='coerce')
+
+    result = data.groupby('Airline Name')['Overall_Rating'].mean().reset_index()
+    print(result)
+    #for index, row in result.iterrows():
+        #AirLineRaiting(airline_code=None, airline_name=row['Airline Name'], rating=row['Overall_Rating']).save()
     #print(IATA.objects.get(id=100).iata)
     #IATA.objects.all().delete()
     #iata = IATA.objects.get(city='The Bronx') 
@@ -101,11 +107,6 @@ class OffersSearch(FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        #user = User.objects.get(email='porovozov.987654321@mail.ru')
-        #group = Group.objects.get(id=1)
-        
-        #user.save()
-        #print(user.groups.all())
         # Получаем результаты последнего поиска
         if 'id_offer_search' in self.request.session:
             try:
@@ -141,57 +142,50 @@ def get_offers(request):
     else:
         return FlightOffer.objects.filter(flightRequest=request).order_by(parm)[:6]
 
-'''
-class ClearSearchHistoryView(View):
-    """
-    Представление для очистки истории поисковых запросов пользователя
-    """
-    def post(self, request, *args, **kwargs):
-        # Проверяем наличие сессии
-        if not request.session.session_key:
-            request.session.create()
-            
-        session_key = request.session.session_key
-        
-        # Удаляем все поисковые запросы для текущей сессии
-        FlightRequest.objects.filter(session_key=session_key).delete()
-        
-        # Если запрос AJAX, возвращаем JSON-ответ
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': True})
-        
-        # Перенаправляем на главную страницу
-        return HttpResponseRedirect(reverse('flights:home'))
+from django.shortcuts import render
+from django.http import JsonResponse, Http404
+from django.conf import settings
+import os
+
+# Adjust the model class import to match your training script's model class
+from flights.recsys.predictor import Recommender
+# Provide the same model class signature as used during training
+from flights.recsys.model_stub import RecModelForInference as ModelClass
+
+# Lazy init (keeps memory in process for faster inference)
+RECOMMENDER = None
+
+def get_recommender():
+    global RECOMMENDER
+    if RECOMMENDER is None:
+        model_path = getattr(settings, 'RECSYS_MODEL_PATH', os.path.join(settings.BASE_DIR, 'recsys_model.pth'))
+        data_dir = getattr(settings, 'RECSYS_DATA_DIR', os.path.join(settings.BASE_DIR, 'recsys_data'))
+        RECOMMENDER = Recommender(ModelClass, model_state_path=model_path, data_dir=data_dir)
+    return RECOMMENDER
 
 
-class BookingSuccessView(TemplateView):
-    template_name = 'flights/booking_success.html'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        booking_id = self.kwargs.get('booking_id')
-        
-        try:
-            from flights.models import Booking
-            booking = Booking.objects.get(id=booking_id)
-            
-            # Добавляем информацию о бронировании в контекст
-            context['booking'] = booking
-            context['offer'] = booking.offer
-            
-            # Получаем сегменты рейса
-            segments = FlightSegment.objects.filter(offer=booking.offer)
-            context['segments'] = segments
-            
-            # Получаем данные о пассажирах
-            context['passengers'] = booking.passenger_data.get('passengers', [])
-            
-            # Если пользователь авторизован, проверяем, что бронирование принадлежит ему
-            if self.request.user.is_authenticated and booking.user and booking.user != self.request.user:
-                context['error'] = 'У вас нет доступа к этому бронированию'
-                
-        except Exception as e:
-            context['error'] = f'Бронирование не найдено или произошла ошибка: {str(e)}'
-            
-        return context
-'''
+def recommendations_view(request, user_id):
+    # returns JSON list of recommended item IDs
+    try:
+        rec = get_recommender()
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+    try:
+        top = rec.recommend_for_user(user_id, top_k=10)
+
+        data = []
+
+        for i in top:
+            offer = FlightOffer.objects.get(id=i)
+            item = {
+                'iataCode': FlightSegment.objects.filter(offer=offer).last().dep_iataCode,
+                'cityName': FlightSegment.objects.filter(offer=offer).last().dep_airport
+            }
+            data.append(item)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+    # You can also render a template and pass item objects to it
+    return JsonResponse({'user_id': user_id, 'data': data})

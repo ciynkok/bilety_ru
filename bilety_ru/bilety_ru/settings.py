@@ -144,6 +144,9 @@ USE_TZ = False
 
 STATIC_URL = 'static/'
 
+RECSYS_MODEL_PATH = BASE_DIR / 'recsys_model.pth'
+RECSYS_DATA_DIR = BASE_DIR / 'recsys_data'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
