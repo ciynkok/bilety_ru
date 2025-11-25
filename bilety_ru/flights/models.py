@@ -53,6 +53,7 @@ class FlightSegment(models.Model):
     arr_terminal = models.CharField(max_length=2, null=True)
     arr_dateTime = models.DateTimeField()
     carrierCode = models.CharField(max_length=2)
+    airlineRaiting = models.ForeignKey('AirLineRaiting', on_delete=models.SET_NULL, null=True, blank=True)
     number = models.CharField(max_length=4, null=True)
     aircraftCode = models.CharField(max_length=4, null=True)
     operating = models.CharField(max_length=2, null=True)

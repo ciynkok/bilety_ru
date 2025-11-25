@@ -3,7 +3,7 @@ import amadeus
 from django.http import JsonResponse
 from django.utils import timezone
 from django.forms.models import model_to_dict
-from flights.models import FlightRequest, FlightOffer, FlightSegment
+from flights.models import FlightRequest, FlightOffer, FlightSegment, AirLineRaiting
 from .models import IATA
 import isodate
 import datetime
@@ -109,7 +109,7 @@ def offer_search_api(flight_req_id):
                         duration_seg = datetime.time(0, 0)  # Устанавливаем значение по умолчанию
                     #print(segment)
                     dep_terminal = '' if not('terminal' in segment['departure']) else segment['departure']['terminal']
-                    arr_terminal = '' if not('terminal' in segment['arrival']) else segment['arrival']['terminal'] 
+                    arr_terminal = '' if not('terminal' in segment['arrival']) else segment['arrival']['terminal']
                     FlightSegment(
                         offer=offer,
                         there_seg=True if i == 0 else False,
@@ -122,6 +122,7 @@ def offer_search_api(flight_req_id):
                         arr_terminal=arr_terminal,
                         arr_dateTime=isodate.parse_datetime(segment['arrival']['at']),
                         carrierCode=segment['carrierCode'],
+                        airlineRaiting=get_rating(segment['carrierCode']),
                         number=segment['number'],
                         aircraftCode=segment['aircraft']['code'],
                         operating=segment['operating']['carrierCode'],
@@ -251,6 +252,28 @@ class CheckPriceView(APIView):
                 'error': str(e)
             }, status=500)
 
+
+def capitalize_words(text: str) -> str:
+    return " ".join(word.capitalize() for word in text.split())
+
+
+def get_rating(iataCode):
+
+    exists = AirLineRaiting.objects.filter(airline_code = iataCode).exists()
+
+    if exists:
+        return AirLineRaiting.objects.get(airline_code = iataCode)
+    else:
+        data = c.reference_data.airlines.get(airlineCodes=iataCode)
+        print(data.data[0]['businessName'])
+        airlineName = capitalize_words(data.data[0]['businessName'])
+        airlineRating = AirLineRaiting.objects.get(airline_name = airlineName)
+        airlineRating.airline_code = iataCode
+        airlineRating.save()
+        return airlineRating
+        
+
+'''
 def check_flight_price(request, offer_id):
     """
     API для проверки актуальной цены рейса через Amadeus API
@@ -427,3 +450,4 @@ def get_order_info(request, order_id):
     
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+'''

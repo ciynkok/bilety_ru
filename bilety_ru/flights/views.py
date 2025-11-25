@@ -12,17 +12,17 @@ import amadeus
 from django.http import JsonResponse
 import datetime
 import json
-from api.views import get_cities, offer_search_api, create_flight_order
+from api.views import get_cities, offer_search_api
 import pandas as pd
 
 
 def index(request):
-    data = pd.read_csv('Airline_review.csv')
+    #data = pd.read_csv('Airline_review.csv')
 
-    data['Overall_Rating'] = pd.to_numeric(data['Overall_Rating'], errors='coerce')
+    #data['Overall_Rating'] = pd.to_numeric(data['Overall_Rating'], errors='coerce')
 
-    result = data.groupby('Airline Name')['Overall_Rating'].mean().reset_index()
-    print(result)
+    #result = data.groupby('Airline Name')['Overall_Rating'].mean().reset_index()
+    #print(result)
     #for index, row in result.iterrows():
         #AirLineRaiting(airline_code=None, airline_name=row['Airline Name'], rating=row['Overall_Rating']).save()
     #print(IATA.objects.get(id=100).iata)
